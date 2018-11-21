@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.robotcontroller.external.samples;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -92,7 +93,7 @@ import java.util.List;
  */
 
 @TeleOp(name="Concept: Vuforia Rover Nav", group ="Concept")
-@Disabled
+//Disabled
 public class ConceptVuforiaNavRoverRuckus extends LinearOpMode {
 
     /*
@@ -107,7 +108,11 @@ public class ConceptVuforiaNavRoverRuckus extends LinearOpMode {
      * Once you've obtained a license key, copy the string from the Vuforia web site
      * and paste it in to your code on the next line, between the double quotes.
      */
-    private static final String VUFORIA_KEY = " -- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+    private static final String VUFORIA_KEY = "AZKGTZf/////AAABmaNQYUeIb0wZqzGIIEMZHY5LB+fIxOJ5Rs+lYn" +
+            "dWRlWknEZzgXyjOYvsVg7iMPga7dhuKlPiGjczKoa+CiByVpadKZO1kb9BZn3aIfaEMIatKZ2cnPn2fTx12DgfI3" +
+            "v5OyINq2YMKDN8FuE9NJP7g0vBHJPCEjr/nX4BG84RV1FUVlrgqWVOATwdkjRZp2hOVB+sQKDU13jDgMpNGKZya" +
+            "S5F00Qc0snjcX7gBg9KTaXVig+juk2jg4yyoXyzC7wbpJzYZt0zuRmjvNlYWEtDi1fqCKudrqkIdUVZLL7QR590" +
+            "oqQN3fenTWvdnuLh/InqsovkUfcxELZVzoYLHv1Pq17J7UUL8o3lvb8Ns5dsGXHq";
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
     // We will define some constants and conversions here
