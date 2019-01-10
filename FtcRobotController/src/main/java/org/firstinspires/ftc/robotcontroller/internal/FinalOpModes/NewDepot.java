@@ -1,4 +1,4 @@
 package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
 
-public class FinalTeleOp {
+public class NewDepot {
 }

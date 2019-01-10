@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
 
+import android.app.Activity;
+import android.graphics.Color;
+import android.view.View;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -36,13 +40,15 @@ import java.util.Locale;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
 
-//@Autonomous(name="Crater", group="Pushbot")
-public class Crater extends LinearOpMode {
+@Autonomous(name="NewCrater", group="Pushbot")
+public class NewCrater extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
     Acceleration gravity;
@@ -58,27 +64,52 @@ public class Crater extends LinearOpMode {
             (WHEEL_DIAMETER_INCHES * Math.PI);
     private ElapsedTime     runtime = new ElapsedTime();
 
+    ColorSensor sensorColor;
+
     DcMotor leftFront;
     DcMotor rightFront;
     DcMotor leftRear;
     DcMotor rightRear;
 
+    DcMotor pullUp;
 
-    DcMotor arm1;
-    DcMotor arm2;
-    DcMotor scoopLifter;
-
-    Servo leftLatch;
-    Servo rightLatch;
-    Servo marker;
-    int armPos;
-    int armPos2;
+    //Servo marker;
 
     boolean testMode = true;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
-    private ThreeBlockYellowVision yellowVision;
+    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
+    private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
+    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
 
+    /*
+     * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
+     * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
+     * A Vuforia 'Development' license key, can be obtained free of charge from the Vuforia developer
+     * web site at https://developer.vuforia.com/license-manager.
+     *
+     * Vuforia license keys are always 380 characters long, and look as if they contain mostly
+     * random data. As an example, here is a example of a fragment of a valid key:
+     *      ... yIgIzTqZ4mWjk9wd3cZO9T1axEqzuhxoGlfOOI2dRzKS4T0hQ8kT ...
+     * Once you've obtained a license key, copy the string from the Vuforia web site
+     * and paste it in to your code on the next line, between the double quotes.
+     */
+    private static final String VUFORIA_KEY = "AZKGTZf/////AAABmaNQYUeIb0wZqzGIIEMZHY5LB+fIxOJ5Rs+lYn" +
+            "dWRlWknEZzgXyjOYvsVg7iMPga7dhuKlPiGjczKoa+CiByVpadKZO1kb9BZn3aIfaEMIatKZ2cnPn2fTx12DgfI3" +
+            "v5OyINq2YMKDN8FuE9NJP7g0vBHJPCEjr/nX4BG84RV1FUVlrgqWVOATwdkjRZp2hOVB+sQKDU13jDgMpNGKZya" +
+            "S5F00Qc0snjcX7gBg9KTaXVig+juk2jg4yyoXyzC7wbpJzYZt0zuRmjvNlYWEtDi1fqCKudrqkIdUVZLL7QR590" +
+            "oqQN3fenTWvdnuLh/InqsovkUfcxELZVzoYLHv1Pq17J7UUL8o3lvb8Ns5dsGXHq";
+    /**
+     * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
+     * localization engine.
+     */
+    private VuforiaLocalizer vuforia;
+
+    /**
+     * {@link #tfod} is the variable we will use to store our instance of the Tensor Flow Object
+     * Detection engine.
+     */
+    private TFObjectDetector tfod;
 
     @Override
     public void runOpMode() {
@@ -98,18 +129,31 @@ public class Crater extends LinearOpMode {
         gravity  = imu.getGravity();
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
 
+        sensorColor = hardwareMap.get(ColorSensor.class, "color");
+
+        // hsvValues is an array that will hold the hue, saturation, and value information.
+        float hsvValues[] = {0F, 0F, 0F};
+
+        // values is a reference to the hsvValues array.
+        final float values[] = hsvValues;
+
+        // sometimes it helps to multiply the raw RGB values with a scale factor
+        // to amplify/attentuate the measured values.
+        final double SCALE_FACTOR = 255;
+
+        // get a reference to the RelativeLayout so we can change the background
+        // color of the Robot Controller app to match the hue detected by the RGB sensor.
+        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
+        final View relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
+
+
         leftFront = hardwareMap.dcMotor.get("leftFront");
         rightFront = hardwareMap.dcMotor.get("rightFront");
         leftRear = hardwareMap.dcMotor.get("leftRear");
         rightRear = hardwareMap.dcMotor.get("rightRear");
-        arm1 = hardwareMap.dcMotor.get("arm1");
-        arm2 = hardwareMap.dcMotor.get("arm2");
-        scoopLifter = hardwareMap.dcMotor.get("scoopLifter");
+        pullUp = hardwareMap.dcMotor.get("pullUp");;
 
-
-        leftLatch = hardwareMap.servo.get("leftLatch");
-        rightLatch = hardwareMap.servo.get("rightLatch");
-        marker = hardwareMap.servo.get("marker");
+        //marker = hardwareMap.servo.get("marker");
 
         telemetry.update();
 
@@ -118,7 +162,7 @@ public class Crater extends LinearOpMode {
             idle();
         }
 
-        arm2.setDirection(DcMotorSimple.Direction.REVERSE);
+        pullUp.setDirection(DcMotorSimple.Direction.REVERSE);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -126,71 +170,56 @@ public class Crater extends LinearOpMode {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        arm1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        arm2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        scoopLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-
-
+        pullUp.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         telemetry.addData(">", "Robot Ready.");    //
         telemetry.update();
         headingAngle = angles.firstAngle;
 
-        leftLatch.setPosition(1);
-        rightLatch.setPosition(0.0);
-        marker.setPosition(0);
+        //marker.setPosition(0);
 
         leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        arm1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        pullUp.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        pullUp.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
         telemetry.update();
 
-        yellowVision = new ThreeBlockYellowVision();
-        // can replace with ActivityViewDisplay.getInstance() for fullscreen
-        yellowVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-//            yellowVision.setShowCountours(false);
-        // start the vision system
-        yellowVision.enable();
-
         while (!isStarted()) {
-            leftLatch.setPosition(1);
-            rightLatch.setPosition(0.0);
-            marker.setPosition(0);
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-            scoopLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            headingAngle = angles.firstAngle;
 
-//            headingAngle = angles.firstAngle;
-//
-//            telemetry.addData("headingAngle", headingAngle);
+            telemetry.addData("headingAngle", headingAngle);
 
+            // convert the RGB values to HSV values.
+            // multiply by the SCALE_FACTOR.
+            // then cast it back to int (SCALE_FACTOR is a double)
+            Color.RGBToHSV((int) (sensorColor.red() * SCALE_FACTOR),
+                    (int) (sensorColor.green() * SCALE_FACTOR),
+                    (int) (sensorColor.blue() * SCALE_FACTOR),
+                    hsvValues);
 
-            // update the settings of the vision pipeline
-            yellowVision.setShowCountours(true);
+            // send the info back to driver station using telemetry function.
+            telemetry.addData("Alpha", sensorColor.alpha());
+            telemetry.addData("Red  ", sensorColor.red());
+            telemetry.addData("Green", sensorColor.green());
+            telemetry.addData("Blue ", sensorColor.blue());
+            telemetry.addData("Hue", hsvValues[0]);
 
-            // get a list of contours from the vision system
-            List<MatOfPoint> contours = yellowVision.getContours();
-            List<MatOfPoint> contourOne = yellowVision.getContourOne();
-            boolean seesBlock;
-            for (int i = 0; i < contourOne.size(); i++) {
-                Rect boundingRect = Imgproc.boundingRect(contourOne.get(i));
-                telemetry.addData("x-coordinate", (boundingRect.x + boundingRect.width) / 2);
-                telemetry.addData("area", Imgproc.contourArea(contourOne.get(i)));
-            }
-            if (contourOne.size() > 0) {
-                seesBlock = true;
-            } else {
-                seesBlock = false;
-            }
-            telemetry.addData("Sees Yellow Block", seesBlock);
+            // change the background color to match the color detected by the RGB sensor.
+            // pass a reference to the hue, saturation, and value array as an argument
+            // to the HSVToColor method.
+            relativeLayout.post(new Runnable() {
+                public void run() {
+                    relativeLayout.setBackgroundColor(Color.HSVToColor(0xff, values));
+                }
+            });
+
             telemetry.update();
-
         }
-//        Begin Program
+//      Begin Program
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
@@ -198,141 +227,104 @@ public class Crater extends LinearOpMode {
         } else {
             sleep(10);
         }
-        //Remove Latch
-//        arm1.setPower(-0.5);
-//        arm2.setPower(-0.5);
-//        sleep(500);
-//        leftLatch.setPosition(0.5);
-//        rightLatch.setPosition(0.4);
-//        sleep(500);
-//        arm1.setPower(-0.5);
-//        arm2.setPower(-0.5);
-//        sleep(500);
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        } else {
-//            sleep(10);
-//        }
-//        arm1.setPower(0.0);
-//        arm2.setPower(0.0);
-//        //Drop down from Lander
-//        armMove(3450, 0.5, 5);
-//
-//        sleep(200);
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        } else {
-//            sleep(10);
-//        }
-//
-//        //Drive left to remove hook
-//        gyroSideDrive(DRIVE_SPEED, -2, 0, 7);
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        } else {
-//            sleep(10);
-//        }
-//
-//        // Drive away from the lander
-//        gyroDrive(DRIVE_SPEED, 3, 0, 10);
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
-//
-//        //Side drive back to the original position after it got off the hook
-//        gyroSideDrive(DRIVE_SPEED, 2, 0, 7);
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
-        //Drive forward to the middle mineral
-        gyroDrive(DRIVE_SPEED, 6, 0, 3);
-        //resetGyro();
 
-        //adjust center of mass
-        //armMove(-2000, 0.5, 5);
+        //Drop down from Lander
+        pullUp(-9050, 1.0, 5);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
             }
         }
+
+        //Drive forward to remove hook
+        gyroDrive(DRIVE_SPEED, -1, 0, 5);
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+
+        //Drive away from the lander
+        gyroSideDrive(0.4, -10, 0, 10);
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+
+        //start vision
+        initVuforia();
+
+        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+            initTfod();
+        } else {
+            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+        }
+
+        /** Activate Tensor Flow Object Detection. */
+        tfod.activate();
+        sleep(1000);
 
         //Create Adaptive Variables to keep track of bot location and task completion
         boolean hitGold = false;
         int position = 0;
 
         //Check if middle mineral is gold
-        sleep(500);
-        if (checkGold()) {
-            //Straighten robot to mineral
-            straightenGold(TURN_SPEED);
-            //Hit the gold
-            gyroDrive(DRIVE_SPEED, 10, 0, 10);
-            gyroDrive(DRIVE_SPEED, -10, 0, 10);
-            hitGold = true;
+        if (!hitGold && checkGold()) {
+            //Hit the gold and come back
+            gyroSideDrive(0.4, -14, 0, 10);
+            sleep(200);
+            gyroSideDrive(0.4, 8, 0, 10);
+
             position = 2;
+            hitGold = true;
         } else {
-            //Drive to the right mineral
-            gyroSideDrive(DRIVE_SPEED, -17, 0, 5);
+            //Turn to the right mineral
+            gyroTurn(TURN_SPEED, -45, -45, 10);
+
+        }
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
         }
 
         //Check if right mineral is gold
-        if (!hitGold) {
-            sleep(100);
-        }
         if (!hitGold && checkGold()) {
-            //Straighten robot to mineral
-            straightenGold(TURN_SPEED);
-            //Hit the gold
-            gyroDrive(DRIVE_SPEED, 10, 0, 10);
-            gyroDrive(DRIVE_SPEED, -10, 0, 10);
+            //Hit the gold and come back
+            gyroSideDrive(DRIVE_SPEED, -20, -45, 10);
+            gyroSideDrive(DRIVE_SPEED, 11, -45, 10);
+
+            position = 1;
             hitGold = true;
-            position = 3;
         } else {
-            //Drive to the left mineral
-            if (!hitGold) {
-                gyroSideDrive(DRIVE_SPEED, 35, 0, 7);
-            }
+            //Turn to the left mineral
+//            if (!hitGold) {
+//                gyroTurn(TURN_SPEED, 38, 38, 10);
+//            }
         }
 
         //Check if left mineral is gold
+//        if (!hitGold && checkGold()) {
+//            //Turn more and Hit the gold and come back
+//            gyroTurn(TURN_SPEED, 45, 45, 10);
+//            gyroSideDrive(DRIVE_SPEED, -20, 45, 10);
+//            gyroSideDrive(DRIVE_SPEED, 20, 45, 10);
+//
+//            position = 3;
+//            hitGold = true;
+//        }
         if (!hitGold) {
-            sleep(100);
+            gyroTurn(TURN_SPEED, 45, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, -21, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, 12, 45, 10);
         }
 
-        if (!hitGold && checkGold()) {
-            //Straighten robot to mineral
-            straightenGold(TURN_SPEED);
-            //Hit the gold
-            gyroDrive(DRIVE_SPEED, 10, 0, 10);
-            gyroDrive(DRIVE_SPEED, -10, 0, 10);
-            hitGold = true;
-            position = 1;
-        }
-
-        yellowVision.disable();
-
-        if (position == 3) {
-            gyroSideDrive(DRIVE_SPEED, 35, 0, 5);
-        }
-
-        if (position == 2) {
-            gyroSideDrive(DRIVE_SPEED, 16, 0, 5);
-        }
+        tfod.shutdown();
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -340,29 +332,47 @@ public class Crater extends LinearOpMode {
             }
         }
 
-        //Side drive away from minerals
-        gyroSideDrive(DRIVE_SPEED, 24, 0, 5);
+        gyroTurn(TURN_SPEED, 0.0, 0.0, 10);
+
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
             }
         }
 
-        //Turn 45
-        gyroTurn(TURN_SPEED, 45, 10, 5);
+        //Drive to wall
+
+        gyroDrive(DRIVE_SPEED,35, 0, 10);
+
+
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
             }
         }
 
-        resetGyro();
+        //Turn to 45 to ram
 
-        //Drive into wall to straighten
-        gyroDrive(0.3, 28, 0, 5);
-        sleep(500);
-        // Side Drive toward the depot
-        gyroSideDriveWall(0.6, 50, 0, 7);
+        gyroTurn(TURN_SPEED,45,45,10);
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+
+        //RAM WALLLLLLLLLLLL
+        gyroSideDrive(DRIVE_SPEED, -23, 45, 10);
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+        //Back up to Depot (Stop using light sensor)
+
+        gyroDrive(DRIVE_SPEED,50, 45, 10);
+
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -371,37 +381,17 @@ public class Crater extends LinearOpMode {
         }
 
         //Place marker
-        marker.setPosition(1);
-        sleep(700);
+//        marker.setPosition(1);
+//        sleep(700);
+//        marker.setPosition(0);
 
         //Drive Toward the Crater
-        gyroSideDriveWall(0.6, -66, 0, 10);
-
-        resetGyro();
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
             }
         }
-        //Back up before turning
-        gyroDrive(DRIVE_SPEED, -1, 0, 5);
-
-        //Turning BEFORE putting the arm over the crater
-        gyroTurn(MINIMUM_TURN_SPEED, 90,20, 10);
-
-        //Drive up to crater
-        gyroDrive(DRIVE_SPEED, -22, 90, 8);
-
-        if (testMode) {
-            while (!gamepad1.y && opModeIsActive()) {
-                sleep(10);
-            }
-        }
-        //Move the arm above the crater
-        armMove(4000, 0.5, 10);
-
-
 
     }
 
@@ -683,8 +673,11 @@ public class Crater extends LinearOpMode {
         }
 
         if (targetAngle == 0.0 && (runtime.seconds() < timeout)){
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             headingAngle = angles.firstAngle;
             while (headingAngle <= (targetAngle - threshold)  || headingAngle >= (targetAngle + threshold)) {
+                angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                headingAngle = angles.firstAngle;
                 error = targetAngle - headingAngle;
 
                 if(error < 0) {
@@ -699,7 +692,6 @@ public class Crater extends LinearOpMode {
                     rightRear.setPower(-speed);
                 }
 
-                headingAngle = angles.firstAngle;
                 //if (counter % 1 == 0){
                 telemetry.addData("Heading ", headingAngle);
                 //telemetry.addData("counter: ", counter);
@@ -894,19 +886,18 @@ public class Crater extends LinearOpMode {
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
     }
 
-    public void armMove(int position, double speed, double timeout) {
+    public void pullUp(int position, double speed, double timeout) {
         runtime.reset();
 
-        double startPosition = arm1.getCurrentPosition();
+        double startPosition = pullUp.getCurrentPosition();
 
         if(position > 0) {
 
-            arm1.setPower(speed);
-            arm2.setPower(speed);
+            pullUp.setPower(speed);
 
-            while ((arm1.getCurrentPosition() < (position + startPosition)) && (runtime.seconds() < timeout)) {
+            while ((pullUp.getCurrentPosition() < (position + startPosition)) && (runtime.seconds() < timeout)) {
 
-                telemetry.addData("encoder value arm", arm1.getCurrentPosition());
+                telemetry.addData("encoder value pullUp", pullUp.getCurrentPosition());
                 telemetry.update();
 
             }
@@ -914,89 +905,85 @@ public class Crater extends LinearOpMode {
 
         else if(position < 0) {
 
-            arm1.setPower(-speed);
-            arm2.setPower(-speed);
+            pullUp.setPower(-speed);
 
-            while (arm1.getCurrentPosition() > (position + startPosition)&& (runtime.seconds() < timeout)) {
+            while (pullUp.getCurrentPosition() > (position + startPosition)&& (runtime.seconds() < timeout)) {
 
-                telemetry.addData("encoder value arm", arm1.getCurrentPosition());
+                telemetry.addData("encoder value arm", pullUp.getCurrentPosition());
                 telemetry.update();
             }
         }
 
-        arm1.setPower(0);
-        arm2.setPower(0);
+        pullUp.setPower(0);
     }
 
     public boolean checkGold() {
-        //yellowVision.enable();
-        // update the settings of the vision pipeline
-        yellowVision.setShowCountours(true);
+        boolean seesBlock = false;
+        // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
+        // first.
+//        initVuforia();
+//
+//        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+//            initTfod();
+//        } else {
+//            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+//        }
 
-        // get a list of contours from the vision system
-        List<MatOfPoint> contours = yellowVision.getContours();
-        List<MatOfPoint> contourOne = yellowVision.getContourOne();
-        boolean seesBlock;
-        for (int i = 0; i < contourOne.size(); i++) {
-            telemetry.addData("area", Imgproc.contourArea(contourOne.get(i)));
+//        /** Activate Tensor Flow Object Detection. */
+//        if (tfod != null) {
+//            tfod.activate();
+//        }
+//
+//        sleep(1000);
+
+        if (tfod != null) {
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null) {
+                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                if (updatedRecognitions.size() > 0) {
+                    if (updatedRecognitions.get(0).getLabel().equals(LABEL_GOLD_MINERAL)) {
+                        seesBlock = true;
+                    } else {
+                        seesBlock = false;
+                    }
+                }
+                telemetry.update();
+            }
         }
-        if (contourOne.size() > 0) {
-            seesBlock = true;
-        } else {
-            seesBlock = false;
-        }
-        telemetry.addData("Sees Yellow Block", seesBlock);
 
-        //yellowVision.disable();
-
+//        if (tfod != null) {
+//            tfod.shutdown();
+//        }
+        telemetry.addData("boolean value: ", seesBlock);
+        telemetry.update();
         return seesBlock;
     }
 
-    public void straightenGold(double speed) {
-        //yellowVision.enable();
-        // update the settings of the vision pipeline
-        double frontWheelConstant = 1.15;
-        yellowVision.setShowCountours(true);
+    private void initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
-        // get a list of contours from the vision system
-        List<MatOfPoint> contours = yellowVision.getContours();
-        List<MatOfPoint> contourOne = yellowVision.getContourOne();
-        int coordinate;
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
 
-        Rect boundingRect = Imgproc.boundingRect(contourOne.get(0));
-        coordinate = (boundingRect.x + boundingRect.width) / 2;
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+    }
 
-        while((coordinate < 120) && opModeIsActive()) {
-            contourOne = yellowVision.getContourOne();
-            if (contourOne.size() > 0) {
-                boundingRect = Imgproc.boundingRect(contourOne.get(0));
-            }
-            coordinate = (boundingRect.x + boundingRect.width) / 2;
-            telemetry.addData("x-coordinate", coordinate);
-            leftFront.setPower(-speed*frontWheelConstant);
-            rightFront.setPower(speed*frontWheelConstant);
-            leftRear.setPower(speed);
-            rightRear.setPower(-speed);
-        }
-
-        while ((coordinate > 160) && opModeIsActive()) {
-            contourOne = yellowVision.getContourOne();
-            if (contourOne.size() > 0) {
-                boundingRect = Imgproc.boundingRect(contourOne.get(0));
-            }
-            coordinate = (boundingRect.x + boundingRect.width) / 2;
-            telemetry.addData("x-coordinate", coordinate);
-            leftFront.setPower(speed*frontWheelConstant);
-            rightFront.setPower(-speed*frontWheelConstant);
-            leftRear.setPower(-speed);
-            rightRear.setPower(speed);
-        }
-        leftFront.setPower(0);
-        rightFront.setPower(0);
-        leftRear.setPower(0);
-        rightRear.setPower(0);
-        //yellowVision.disable();
-
+    /**
+     * Initialize the Tensor Flow Object Detection engine.
+     */
+    private void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
     }
 
     void composeTelemetry() {

@@ -26,15 +26,18 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-//@TeleOp(name="mechanumDriveOnly", group="8872")
-@Disabled
-public class MechanumDriveOnly extends LinearOpMode {
+@TeleOp(name="TeleOpTest", group="8872")
+//@Disabled
+public class TeleOpTest extends LinearOpMode {
 
     /* Declare OpMode members. */
     DcMotor leftFront;
     DcMotor rightFront;
     DcMotor leftRear;
     DcMotor rightRear;
+
+    DcMotor pullUp;
+    double pullUpPower;
 
     boolean slowMode = false;
 
@@ -58,9 +61,11 @@ public class MechanumDriveOnly extends LinearOpMode {
         rightFront = hardwareMap.dcMotor.get("rightFront");
         leftRear = hardwareMap.dcMotor.get("leftRear");
         rightRear = hardwareMap.dcMotor.get("rightRear");
+        pullUp = hardwareMap.dcMotor.get("pullUp");
 
-        rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightRear.setDirection(DcMotorSimple.Direction.REVERSE);
+        pullUp.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Hello Driver");    //
@@ -89,6 +94,7 @@ public class MechanumDriveOnly extends LinearOpMode {
             rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            pullUp.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             if (slowMode) {
                 leftFront.setPower(v1 / 2);
@@ -104,19 +110,18 @@ public class MechanumDriveOnly extends LinearOpMode {
             }
 
             if (gamepad1.a) {
-                slowMode = true;
+                slowMode  = !slowMode;
+                sleep(100);
+
             }
 
-            if (gamepad1.b) {
-                slowMode = false;
-            }
 
             telemetry.addData("Slow Mode : ", slowMode);
+            telemetry.addData("pullUp Power : ", pullUp.getPower());
             telemetry.update();
 
-
-
-
+            pullUpPower = gamepad2.left_stick_y;
+            pullUp.setPower(pullUpPower);
 
 
         }

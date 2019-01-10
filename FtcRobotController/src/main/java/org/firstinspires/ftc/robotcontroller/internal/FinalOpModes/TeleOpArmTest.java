@@ -1,18 +1,13 @@
-package org.firstinspires.ftc.robotcontroller.internal;
+package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "8872 Final TeleOp", group = "8872")
+//@TeleOp(name = "8872 Final TeleOp", group = "8872")
 public class TeleOpArmTest extends LinearOpMode {
     //Drive motors
     DcMotor arm1;
