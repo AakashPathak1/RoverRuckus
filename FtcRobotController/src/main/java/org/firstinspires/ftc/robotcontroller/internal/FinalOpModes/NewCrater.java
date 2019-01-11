@@ -52,9 +52,9 @@ public class NewCrater extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
     Acceleration gravity;
-    static final double     TURN_SPEED              = 0.2;     // Nominal half speed for better accuracy.
+    static final double     TURN_SPEED              = 0.3;     // Nominal half speed for better accuracy.
     static final double     MINIMUM_TURN_SPEED      = 0.2;
-    static final double     DRIVE_SPEED             = 0.3;
+    static final double     DRIVE_SPEED             = 0.4;
     static final double APPROACH_SPEED = 0.2;
     static final double SPEED_FACTOR = 1.0;
     static final double COUNTS_PER_MOTOR_REV = 537.6;    //  Neverest 20 Motor Encoder
@@ -73,9 +73,9 @@ public class NewCrater extends LinearOpMode {
 
     DcMotor pullUp;
 
-    //Servo marker;
+    Servo marker;
 
-    boolean testMode = true;
+    boolean testMode = false;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -153,7 +153,7 @@ public class NewCrater extends LinearOpMode {
         rightRear = hardwareMap.dcMotor.get("rightRear");
         pullUp = hardwareMap.dcMotor.get("pullUp");;
 
-        //marker = hardwareMap.servo.get("marker");
+        marker = hardwareMap.servo.get("marker");
 
         telemetry.update();
 
@@ -176,7 +176,7 @@ public class NewCrater extends LinearOpMode {
         telemetry.update();
         headingAngle = angles.firstAngle;
 
-        //marker.setPosition(0);
+        marker.setPosition(0);
 
         leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -217,6 +217,8 @@ public class NewCrater extends LinearOpMode {
                 }
             });
 
+            marker.setPosition(0);
+
             telemetry.update();
         }
 //      Begin Program
@@ -224,8 +226,6 @@ public class NewCrater extends LinearOpMode {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
             }
-        } else {
-            sleep(10);
         }
 
         //Drop down from Lander
@@ -247,7 +247,7 @@ public class NewCrater extends LinearOpMode {
         }
 
         //Drive away from the lander
-        gyroSideDrive(0.4, -10, 0, 10);
+        gyroSideDrive(0.4, -8, 0, 10);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -268,6 +268,12 @@ public class NewCrater extends LinearOpMode {
         tfod.activate();
         sleep(1000);
 
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+
         //Create Adaptive Variables to keep track of bot location and task completion
         boolean hitGold = false;
         int position = 0;
@@ -275,15 +281,18 @@ public class NewCrater extends LinearOpMode {
         //Check if middle mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
-            gyroSideDrive(0.4, -14, 0, 10);
+            gyroDrive(DRIVE_SPEED,2,0,10);
             sleep(200);
-            gyroSideDrive(0.4, 8, 0, 10);
+            gyroSideDrive(0.4, -18, 0, 10);
+            sleep(200);
+            gyroSideDrive(0.4, 11, 0, 10);
 
             position = 2;
             hitGold = true;
         } else {
             //Turn to the right mineral
-            gyroTurn(TURN_SPEED, -45, -45, 10);
+            gyroTurn(TURN_SPEED, -42, -42, 10);
+            sleep(800);
 
         }
 
@@ -296,8 +305,8 @@ public class NewCrater extends LinearOpMode {
         //Check if right mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
-            gyroSideDrive(DRIVE_SPEED, -20, -45, 10);
-            gyroSideDrive(DRIVE_SPEED, 11, -45, 10);
+            gyroSideDrive(DRIVE_SPEED, -22, -42, 10);
+            gyroSideDrive(DRIVE_SPEED, 13, -42, 10);
 
             position = 1;
             hitGold = true;
@@ -320,8 +329,8 @@ public class NewCrater extends LinearOpMode {
 //        }
         if (!hitGold) {
             gyroTurn(TURN_SPEED, 45, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, -21, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, 12, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, -24, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, 15, 45, 10);
         }
 
         tfod.shutdown();
@@ -362,7 +371,7 @@ public class NewCrater extends LinearOpMode {
         }
 
         //RAM WALLLLLLLLLLLL
-        gyroSideDrive(DRIVE_SPEED, -23, 45, 10);
+        gyroSideDrive(DRIVE_SPEED, -20, 10);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -370,9 +379,28 @@ public class NewCrater extends LinearOpMode {
             }
         }
         //Back up to Depot (Stop using light sensor)
+        leftFront.setPower(0.5);
+        leftRear.setPower(0.5);
+        rightFront.setPower(0.5);
+        rightRear.setPower(0.5);
 
-        gyroDrive(DRIVE_SPEED,50, 45, 10);
+        while (hsvValues[0] < 150 && hsvValues[0] > 40) {
+            // convert the RGB values to HSV values.
+            // multiply by the SCALE_FACTOR.
+            // then cast it back to int (SCALE_FACTOR is a double)
+            Color.RGBToHSV((int) (sensorColor.red() * SCALE_FACTOR),
+                    (int) (sensorColor.green() * SCALE_FACTOR),
+                    (int) (sensorColor.blue() * SCALE_FACTOR),
+                    hsvValues);
+            telemetry.addData("Hue", hsvValues[0]);
+            telemetry.update();
+            sleep(10);
+        }
 
+        leftFront.setPower(0);
+        leftRear.setPower(0);
+        rightFront.setPower(0);
+        rightRear.setPower(0);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -381,17 +409,20 @@ public class NewCrater extends LinearOpMode {
         }
 
         //Place marker
-//        marker.setPosition(1);
-//        sleep(700);
-//        marker.setPosition(0);
+        marker.setPosition(1);
+        sleep(700);
+        marker.setPosition(0);
 
-        //Drive Toward the Crater
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
             }
         }
+
+        //Drive Toward the Crater
+
+        gyroDrive(0.5,-62,10);
 
     }
 
@@ -792,6 +823,87 @@ public class NewCrater extends LinearOpMode {
 
         gyroTurn(MINIMUM_TURN_SPEED, angle, angle, 7);
 
+
+        sleep(50);
+    }
+
+    public void gyroSideDrive(double speed, double inches, double timeout) {
+        //-inches = left
+        //+inches = right
+        double leftSpeed;
+        double rightSpeed;
+        double headingAngle;
+
+        double frontWheelConstant = 1.15;
+        double encoderCount = inches * COUNTS_PER_INCH;
+        double error;
+        double startPosition = leftRear.getCurrentPosition();
+
+        runtime.reset();
+
+        if(encoderCount > 0 && (runtime.seconds() < timeout)) {
+
+            leftFront.setPower(-speed*frontWheelConstant);
+            rightFront.setPower(speed*frontWheelConstant);
+            leftRear.setPower(speed);
+            rightRear.setPower(-speed);
+
+            while ((leftRear.getCurrentPosition() < (encoderCount + startPosition)) && opModeIsActive()) {
+//                headingAngle = angles.firstAngle;
+//                error = headingAngle - target;
+//                if(Math.abs(error) > 0.5) {
+//                    speed = speed - (error) / 100;
+//                    speed = speed + (error) / 100;
+//                } else {
+//                    speed = speed;
+//                    speed = speed;
+//                }
+
+
+//                leftSpeed = Range.clip(speed, -1, 1);
+//                rightSpeed = Range.clip(speed, -1, 1);
+
+
+
+                telemetry.addData("encoder value", leftRear.getCurrentPosition());
+                telemetry.update();
+
+            }
+        }
+
+        else if(encoderCount < 0 && (runtime.seconds() < timeout)) {
+
+            leftFront.setPower(speed*frontWheelConstant);
+            rightFront.setPower(-speed*frontWheelConstant);
+            leftRear.setPower(-speed);
+            rightRear.setPower(speed);
+
+            while ((leftRear.getCurrentPosition() > (encoderCount + startPosition) && opModeIsActive())) {
+//                headingAngle = angles.firstAngle;
+//                error = headingAngle - target;
+//
+//                if (Math.abs(error) > 0.5) {
+//                    leftSpeed = speed + (error) / 100;
+//                    rightSpeed = speed - (error) / 100;
+//                } else {
+//                    leftSpeed = speed;
+//                    rightSpeed = speed;
+//                }
+//
+//                leftSpeed = Range.clip(leftSpeed, -1, 1);
+//                rightSpeed = Range.clip(rightSpeed, -1, 1);
+
+
+
+                telemetry.addData("encoder value", leftRear.getCurrentPosition());
+                telemetry.update();
+            }
+        }
+
+        leftFront.setPower(0);
+        rightFront.setPower(0);
+        leftRear.setPower(0);
+        rightRear.setPower(0);
 
         sleep(50);
     }

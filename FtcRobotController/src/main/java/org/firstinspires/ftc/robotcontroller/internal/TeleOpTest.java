@@ -39,6 +39,9 @@ public class TeleOpTest extends LinearOpMode {
     DcMotor pullUp;
     double pullUpPower;
 
+    DcMotor arm;
+    double armPower;
+
     boolean slowMode = false;
 
 
@@ -62,6 +65,7 @@ public class TeleOpTest extends LinearOpMode {
         leftRear = hardwareMap.dcMotor.get("leftRear");
         rightRear = hardwareMap.dcMotor.get("rightRear");
         pullUp = hardwareMap.dcMotor.get("pullUp");
+        arm = hardwareMap.dcMotor.get("arm");
 
         pullUp.setDirection(DcMotorSimple.Direction.REVERSE);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -95,6 +99,7 @@ public class TeleOpTest extends LinearOpMode {
             leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             pullUp.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             if (slowMode) {
                 leftFront.setPower(v1 / 2);
@@ -118,10 +123,33 @@ public class TeleOpTest extends LinearOpMode {
 
             telemetry.addData("Slow Mode : ", slowMode);
             telemetry.addData("pullUp Power : ", pullUp.getPower());
+            telemetry.addData("lift encoder: ", pullUp.getCurrentPosition());
             telemetry.update();
 
             pullUpPower = gamepad2.left_stick_y;
             pullUp.setPower(pullUpPower);
+
+            armPower = -gamepad2.right_stick_y;
+
+            telemetry.addData("Motor Encoder Position: ", arm.getCurrentPosition());
+            telemetry.addData("motor power", arm.getPower());
+            telemetry.update();
+
+            if(Math.abs(armPower)<.05) {
+                arm.setPower(arm.getCurrentPosition()/7000.0);
+            } else {
+                arm.setPower(armPower);
+            }
+
+//            if (gamepad2.a) {
+//                leftCollect.setPosition(0);
+//                rightCollect.setPosition(1);
+//            }
+//
+//            if (gamepad2.b) {
+//                leftCollect.setPosition(1);
+//                rightCollect.setPosition(0);
+//            }
 
 
         }
