@@ -240,7 +240,8 @@ public class NewDepot extends LinearOpMode {
 
         pullUp.setPower(-1.0);
 
-        while (digitalTouch.getState() == true) {
+        //runtime.reset();
+        while (digitalTouch.getState() == true/* && (runtime.seconds() < 8.0)*/) {
             telemetry.addData("Digital Touch", "Is Not Pressed");
             sleep(10);
         }

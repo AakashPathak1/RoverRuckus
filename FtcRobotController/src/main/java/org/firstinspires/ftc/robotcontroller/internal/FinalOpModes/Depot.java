@@ -41,7 +41,7 @@ import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
 
-@Autonomous(name="Depot", group="Pushbot")
+//@Autonomous(name="Depot", group="Pushbot")
 public class Depot extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;

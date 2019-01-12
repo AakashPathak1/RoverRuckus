@@ -239,8 +239,8 @@ public class NewCrater extends LinearOpMode {
         //Drop down from Lander
 
         pullUp.setPower(-1.0);
-
-        while (digitalTouch.getState() == true) {
+        //runtime.reset();
+        while (digitalTouch.getState() == true/* && (runtime.seconds() < 8.0)*/) {
             telemetry.addData("Digital Touch", "Is Not Pressed");
             sleep(10);
         }
@@ -361,7 +361,7 @@ public class NewCrater extends LinearOpMode {
             }
         }
 
-        gyroTurn(TURN_SPEED, 0.0, 0.0, 10);
+        gyroTurn(0.2, 0.0, 0.0, 10);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {

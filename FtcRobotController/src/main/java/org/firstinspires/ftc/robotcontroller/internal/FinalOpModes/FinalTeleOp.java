@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.robotcontroller.internal;
+package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -27,9 +27,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-//@TeleOp(name="TeleOpTest", group="8872")
+@TeleOp(name="FinalTeleOp", group="8872")
 //@Disabled
-public class TeleOpTest extends LinearOpMode {
+public class FinalTeleOp extends LinearOpMode {
 
     /* Declare OpMode members. */
     DcMotor leftFront;
@@ -42,6 +42,11 @@ public class TeleOpTest extends LinearOpMode {
 
     DcMotor arm;
     double armPower;
+
+    DcMotor scooper;
+
+    Servo colLeft;
+    Servo colRight;
 
     boolean slowMode = false;
 
@@ -66,6 +71,9 @@ public class TeleOpTest extends LinearOpMode {
         rightRear = hardwareMap.dcMotor.get("rightRear");
         pullUp = hardwareMap.dcMotor.get("pullUp");
         arm = hardwareMap.dcMotor.get("arm");
+        scooper = hardwareMap.dcMotor.get("scooper");
+        colLeft = hardwareMap.servo.get("colLeft");
+        colRight = hardwareMap.servo.get("colRight");
 
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
 
@@ -105,6 +113,7 @@ public class TeleOpTest extends LinearOpMode {
             rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             pullUp.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            scooper.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             if (slowMode) {
                 leftFront.setPower(v1 / 2);
@@ -159,15 +168,27 @@ public class TeleOpTest extends LinearOpMode {
                 arm.setPower(armPower);
             }
 
-//            if (gamepad2.a) {
-//                leftCollect.setPosition(0);
-//                rightCollect.setPosition(1);
-//            }
-//
-//            if (gamepad2.b) {
-//                leftCollect.setPosition(1);
-//                rightCollect.setPosition(0);
-//            }
+            if (gamepad2.dpad_up) {
+                scooper.setPower(1.0);
+            } else {
+                scooper.setPower(0.0);
+            }
+
+            if (gamepad2.dpad_down) {
+                scooper.setPower(-1.0);
+            } else {
+                scooper.setPower(0.0);
+            }
+
+            if (gamepad2.a) {
+                colLeft.setPosition(0);
+                colRight.setPosition(1);
+            }
+
+            if (gamepad2.b) {
+                colLeft.setPosition(1);
+                colRight.setPosition(0);
+            }
 
 
         }

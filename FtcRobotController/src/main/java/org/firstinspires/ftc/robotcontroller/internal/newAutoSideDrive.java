@@ -60,7 +60,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Autonomous(name="newAutoSideDrive", group="Pushbot")
+//@Autonomous(name="newAutoSideDrive", group="Pushbot")
 public class newAutoSideDrive extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
