@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -74,6 +75,8 @@ public class NewCrater extends LinearOpMode {
     DcMotor pullUp;
 
     Servo marker;
+
+    DigitalChannel digitalTouch;  // Hardware Device Object
 
     boolean testMode = false;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -155,6 +158,11 @@ public class NewCrater extends LinearOpMode {
 
         marker = hardwareMap.servo.get("marker");
 
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
+
+        // set the digital channel to input.
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+
         telemetry.update();
 
         while (!isStopRequested() && imu.isGyroCalibrated())  {
@@ -229,7 +237,18 @@ public class NewCrater extends LinearOpMode {
         }
 
         //Drop down from Lander
-        pullUp(-9050, 1.0, 5);
+
+        pullUp.setPower(-1.0);
+
+        while (digitalTouch.getState() == true) {
+            telemetry.addData("Digital Touch", "Is Not Pressed");
+            sleep(10);
+        }
+        telemetry.addData("Digital Touch", "Is Pressed");
+
+        pullUp.setPower(0.0);
+
+        //pullUp(-9050, 1.0, 5);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -306,7 +325,7 @@ public class NewCrater extends LinearOpMode {
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
             gyroSideDrive(DRIVE_SPEED, -22, -42, 10);
-            gyroSideDrive(DRIVE_SPEED, 13, -42, 10);
+            gyroSideDrive(DRIVE_SPEED, 10, -42, 10);
 
             position = 1;
             hitGold = true;
@@ -331,6 +350,7 @@ public class NewCrater extends LinearOpMode {
             gyroTurn(TURN_SPEED, 45, 45, 10);
             gyroSideDrive(DRIVE_SPEED, -24, 45, 10);
             gyroSideDrive(DRIVE_SPEED, 15, 45, 10);
+            position = 3;
         }
 
         tfod.shutdown();
@@ -371,7 +391,7 @@ public class NewCrater extends LinearOpMode {
         }
 
         //RAM WALLLLLLLLLLLL
-        gyroSideDrive(DRIVE_SPEED, -20, 10);
+        gyroSideDrive(DRIVE_SPEED, -24, 10);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {

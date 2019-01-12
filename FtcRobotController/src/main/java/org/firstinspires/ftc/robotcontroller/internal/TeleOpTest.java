@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -44,8 +45,7 @@ public class TeleOpTest extends LinearOpMode {
 
     boolean slowMode = false;
 
-
-
+    DigitalChannel digitalTouch;  // Hardware Device Object
 
     static final double APPROACH_SPEED = 0.2;
     static final double COUNTS_PER_MOTOR_REV = 1120;    // eg: TETRIX Motor Encoder
@@ -66,6 +66,11 @@ public class TeleOpTest extends LinearOpMode {
         rightRear = hardwareMap.dcMotor.get("rightRear");
         pullUp = hardwareMap.dcMotor.get("pullUp");
         arm = hardwareMap.dcMotor.get("arm");
+
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
+
+        // set the digital channel to input.
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         pullUp.setDirection(DcMotorSimple.Direction.REVERSE);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -126,8 +131,21 @@ public class TeleOpTest extends LinearOpMode {
             telemetry.addData("lift encoder: ", pullUp.getCurrentPosition());
             telemetry.update();
 
-            pullUpPower = gamepad2.left_stick_y;
-            pullUp.setPower(pullUpPower);
+            // if the digital channel returns true it's HIGH and the button is unpressed.
+            if (digitalTouch.getState() == true) {
+                telemetry.addData("Digital Touch", "Is Not Pressed");
+                pullUpPower = gamepad2.left_stick_y;
+                pullUp.setPower(pullUpPower);
+            } else {
+                pullUpPower = gamepad2.left_stick_y;
+                if (pullUpPower >= 0) {
+                    pullUp.setPower(pullUpPower);
+                } else {
+                    pullUp.setPower(0);
+                }
+                telemetry.addData("Digital Touch", "Is Pressed");
+            }
+
 
             armPower = -gamepad2.right_stick_y;
 
