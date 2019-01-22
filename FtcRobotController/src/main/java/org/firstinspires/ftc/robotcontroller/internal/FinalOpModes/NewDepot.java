@@ -75,6 +75,8 @@ public class NewDepot extends LinearOpMode {
     DcMotor pullUp;
 
     Servo marker;
+    Servo colLeft;
+    Servo colRight;
 
     DigitalChannel digitalTouch;  // Hardware Device Object
 
@@ -157,6 +159,8 @@ public class NewDepot extends LinearOpMode {
         pullUp = hardwareMap.dcMotor.get("pullUp");;
 
         marker = hardwareMap.servo.get("marker");
+        colLeft = hardwareMap.servo.get("colLeft");
+        colRight = hardwareMap.servo.get("colRight");
 
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
 
@@ -185,6 +189,9 @@ public class NewDepot extends LinearOpMode {
         headingAngle = angles.firstAngle;
 
         marker.setPosition(0);
+
+        colLeft.setPosition(0);
+        colRight.setPosition(1);
 
         leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -226,6 +233,9 @@ public class NewDepot extends LinearOpMode {
             });
 
             marker.setPosition(0);
+
+            colLeft.setPosition(0);
+            colRight.setPosition(1);
 
             telemetry.update();
         }
@@ -297,7 +307,7 @@ public class NewDepot extends LinearOpMode {
         //Create Adaptive Variables to keep track of bot location and task completion
         boolean hitGold = false;
         int position = 0;
-
+        sleep(400);
         //Check if middle mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
@@ -349,8 +359,8 @@ public class NewDepot extends LinearOpMode {
 //        }
         if (!hitGold) {
             gyroTurn(TURN_SPEED, 45, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, -24, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, 14, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, -26, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, 13, 45, 10);
         }
 
         tfod.shutdown();
@@ -408,13 +418,16 @@ public class NewDepot extends LinearOpMode {
                 sleep(10);
             }
         }
+
+        gyroDrive(DRIVE_SPEED, 10, 5);
         //Back up to Depot (Stop using light sensor)
         leftFront.setPower(0.5);
         leftRear.setPower(0.5);
         rightFront.setPower(0.5);
         rightRear.setPower(0.5);
 
-        while (hsvValues[0] < 150 && hsvValues[0] > 40) {
+        //while (hsvValues[0] < 150 && hsvValues[0] > 40) {
+        while (Math.abs(sensorColor.red() - sensorColor.blue()) < 5) {
             // convert the RGB values to HSV values.
             // multiply by the SCALE_FACTOR.
             // then cast it back to int (SCALE_FACTOR is a double)
@@ -452,7 +465,7 @@ public class NewDepot extends LinearOpMode {
 
         //Drive Toward the Crater
 
-        gyroDrive(0.5,-62,10);
+        gyroDrive(0.5,-67,10);
 
     }
 

@@ -92,6 +92,9 @@ public class FinalTeleOp extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
+        colLeft.setPosition(0);
+        colRight.setPosition(1);
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
@@ -130,7 +133,7 @@ public class FinalTeleOp extends LinearOpMode {
 
             if (gamepad1.a) {
                 slowMode  = !slowMode;
-                sleep(100);
+                sleep(300);
 
             }
 
@@ -170,11 +173,7 @@ public class FinalTeleOp extends LinearOpMode {
 
             if (gamepad2.dpad_up) {
                 scooper.setPower(1.0);
-            } else {
-                scooper.setPower(0.0);
-            }
-
-            if (gamepad2.dpad_down) {
+            } else if (gamepad2.dpad_down)  {
                 scooper.setPower(-1.0);
             } else {
                 scooper.setPower(0.0);

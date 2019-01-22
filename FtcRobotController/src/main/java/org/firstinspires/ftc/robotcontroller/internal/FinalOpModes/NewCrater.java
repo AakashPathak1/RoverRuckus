@@ -75,6 +75,8 @@ public class NewCrater extends LinearOpMode {
     DcMotor pullUp;
 
     Servo marker;
+    Servo colLeft;
+    Servo colRight;
 
     DigitalChannel digitalTouch;  // Hardware Device Object
 
@@ -157,6 +159,8 @@ public class NewCrater extends LinearOpMode {
         pullUp = hardwareMap.dcMotor.get("pullUp");;
 
         marker = hardwareMap.servo.get("marker");
+        colLeft = hardwareMap.servo.get("colLeft");
+        colRight = hardwareMap.servo.get("colRight");
 
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
 
@@ -185,6 +189,9 @@ public class NewCrater extends LinearOpMode {
         headingAngle = angles.firstAngle;
 
         marker.setPosition(0);
+
+        colLeft.setPosition(0);
+        colRight.setPosition(1);
 
         leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -226,6 +233,9 @@ public class NewCrater extends LinearOpMode {
             });
 
             marker.setPosition(0);
+
+            colLeft.setPosition(0);
+            colRight.setPosition(1);
 
             telemetry.update();
         }
@@ -349,7 +359,7 @@ public class NewCrater extends LinearOpMode {
         if (!hitGold) {
             gyroTurn(TURN_SPEED, 45, 45, 10);
             gyroSideDrive(DRIVE_SPEED, -24, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, 15, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, 14, 45, 10);
             position = 3;
         }
 
