@@ -48,7 +48,7 @@ import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
 
-@Autonomous(name="NewCrater", group="Pushbot")
+//@Autonomous(name="NewCrater", group="Pushbot")
 public class NewCrater extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
@@ -1186,4 +1186,3 @@ public class NewCrater extends LinearOpMode {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 }
-

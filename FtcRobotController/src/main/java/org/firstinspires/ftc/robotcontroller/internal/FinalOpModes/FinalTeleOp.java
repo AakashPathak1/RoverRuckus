@@ -50,14 +50,17 @@ public class FinalTeleOp extends LinearOpMode {
 
     boolean slowMode = false;
 
-    DigitalChannel digitalTouch;  // Hardware Device Object
+    DigitalChannel upStop;  // Hardware Device Object
+    DigitalChannel downStop;  // Hardware Device Object
 
     static final double APPROACH_SPEED = 0.2;
-    static final double COUNTS_PER_MOTOR_REV = 1120;    // eg: TETRIX Motor Encoder
+    static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: Torquenado Motor Encoder
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
     static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * Math.PI);
+
+    private ElapsedTime     runtime = new ElapsedTime();
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -75,10 +78,12 @@ public class FinalTeleOp extends LinearOpMode {
         colLeft = hardwareMap.servo.get("colLeft");
         colRight = hardwareMap.servo.get("colRight");
 
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
+        upStop = hardwareMap.get(DigitalChannel.class, "upStop");
+        downStop = hardwareMap.get(DigitalChannel.class, "downStop");
 
         // set the digital channel to input.
-        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+        upStop.setMode(DigitalChannel.Mode.INPUT);
+        downStop.setMode(DigitalChannel.Mode.INPUT);
 
         pullUp.setDirection(DcMotorSimple.Direction.REVERSE);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -88,9 +93,12 @@ public class FinalTeleOp extends LinearOpMode {
         telemetry.addData("Say", "Hello Driver");    //
         telemetry.update();
 
+//        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
+
 
         colLeft.setPosition(0);
         colRight.setPosition(1);
@@ -141,21 +149,30 @@ public class FinalTeleOp extends LinearOpMode {
             telemetry.addData("Slow Mode : ", slowMode);
             telemetry.addData("pullUp Power : ", pullUp.getPower());
             telemetry.addData("lift encoder: ", pullUp.getCurrentPosition());
-            telemetry.update();
 
             // if the digital channel returns true it's HIGH and the button is unpressed.
-            if (digitalTouch.getState() == true) {
-                telemetry.addData("Digital Touch", "Is Not Pressed");
+            if ((upStop.getState() == true) && (downStop.getState() == true)) {
+                telemetry.addData("upStop", "Is Not Pressed");
                 pullUpPower = gamepad2.left_stick_y;
                 pullUp.setPower(pullUpPower);
             } else {
-                pullUpPower = gamepad2.left_stick_y;
-                if (pullUpPower >= 0) {
-                    pullUp.setPower(pullUpPower);
-                } else {
-                    pullUp.setPower(0);
+                if (upStop.getState() == false) {
+                    pullUpPower = gamepad2.left_stick_y;
+                    if (pullUpPower > 0) {
+                        pullUp.setPower(pullUpPower);
+                    } else {
+                        pullUp.setPower(0);
+                    }
+                    telemetry.addData("upStop", "Is Pressed");
+                } else if (downStop.getState() == false) {
+                    pullUpPower = gamepad2.left_stick_y;
+                    if (pullUpPower < 0) {
+                        pullUp.setPower(pullUpPower);
+                    } else {
+                        pullUp.setPower(0);
+                    }
+                    telemetry.addData("downStop", "Is Pressed");
                 }
-                telemetry.addData("Digital Touch", "Is Pressed");
             }
 
 
@@ -165,11 +182,7 @@ public class FinalTeleOp extends LinearOpMode {
             telemetry.addData("motor power", arm.getPower());
             telemetry.update();
 
-            if(Math.abs(armPower)<.05) {
-                arm.setPower(arm.getCurrentPosition()/7000.0);
-            } else {
-                arm.setPower(armPower);
-            }
+            arm.setPower(armPower);
 
             if (gamepad2.dpad_up) {
                 scooper.setPower(1.0);
@@ -179,21 +192,50 @@ public class FinalTeleOp extends LinearOpMode {
                 scooper.setPower(0.0);
             }
 
-            if (gamepad2.a) {
-                colLeft.setPosition(0);
-                colRight.setPosition(1);
-            }
-
-            if (gamepad2.b) {
-                colLeft.setPosition(1);
-                colRight.setPosition(0);
-            }
-
 
         }
 
     }
 
+    public void pullUp(int position, double speed, double timeout) {
+        runtime.reset();
+
+
+        //double startPosition = arm.getCurrentPosition();
+
+        if(position > 0) {
+
+            arm.setPower(speed);
+
+            while ((arm.getCurrentPosition() < position) && (runtime.seconds() < timeout)) {
+
+                telemetry.addData("encoder value", arm.getCurrentPosition());
+                telemetry.update();
+
+            }
+        }
+
+        else if(position < 0) {
+
+            arm.setPower(-speed);
+
+            while ((arm.getCurrentPosition() > position) && (runtime.seconds() < timeout)) {
+
+                telemetry.addData("encoder value", arm.getCurrentPosition());
+                telemetry.update();
+            }
+        } else if (position == 0) {
+            arm.setPower(-speed);
+
+            while ((arm.getCurrentPosition() > position) && (runtime.seconds() < timeout)) {
+
+                telemetry.addData("encoder value", arm.getCurrentPosition());
+                telemetry.update();
+            }
+        }
+
+        arm.setPower(0);
+    }
 
 }
 
