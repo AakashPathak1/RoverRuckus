@@ -63,9 +63,9 @@ public class NewCraterRegionals extends LinearOpMode {
     Servo colLeft;
     Servo colRight;
 
-    DigitalChannel digitalTouch;  // Hardware Device Object
+    DigitalChannel downStop;  // Hardware Device Object
 
-    boolean testMode = false;
+    boolean testMode = true;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -147,10 +147,10 @@ public class NewCraterRegionals extends LinearOpMode {
         colLeft = hardwareMap.servo.get("colLeft");
         colRight = hardwareMap.servo.get("colRight");
 
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
+        downStop = hardwareMap.get(DigitalChannel.class, "downStop");
 
         // set the digital channel to input.
-        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+        downStop.setMode(DigitalChannel.Mode.INPUT);
 
         telemetry.update();
 
@@ -235,28 +235,29 @@ public class NewCraterRegionals extends LinearOpMode {
 
         //Drop down from Lander
 
-        pullUp.setPower(-1.0);
-        //runtime.reset();
-        while (digitalTouch.getState() == true && opModeIsActive()) {
-            telemetry.addData("Digital Touch", "Is Not Pressed");
-            sleep(10);
-        }
-        telemetry.addData("Digital Touch", "Is Pressed");
-
-        pullUp.setPower(0.0);
-
-        //pullUp(-9050, 1.0, 5);
-
-        if (testMode) {
-            while (!gamepad1.y) {
-                if (!opModeIsActive()) {
-                    return;
-                }
-            }
-        }
+//        pullUp.setPower(-1.0);
+//        //runtime.reset();
+//        while (downStop.getState() == true && opModeIsActive()) {
+//            if (!opModeIsActive()) {
+//                return;
+//            }
+//            telemetry.addData("Down Stop", "Is Not Pressed");
+//            sleep(10);
+//        }
+//        telemetry.addData("Down Stop", "Is Pressed");
+//
+//        pullUp.setPower(0.0);
+//
+//        if (testMode) {
+//            while (!gamepad1.y) {
+//                if (!opModeIsActive()) {
+//                    return;
+//                }
+//            }
+//        }
 
         //Drive forward to remove hook
-        gyroDrive(DRIVE_SPEED, -1, 0, 5);
+        gyroDrive(DRIVE_SPEED,-1, 0, 5);
 
         if (testMode) {
             while (!gamepad1.y) {
@@ -481,7 +482,7 @@ public class NewCraterRegionals extends LinearOpMode {
 
         if(encoderCount > 0) {
 
-            while ((leftRear.getCurrentPosition() < (encoderCount + startPosition)) && opModeIsActive()) {
+            while ((leftRear.getCurrentPosition() < (encoderCount + startPosition))) {
                 if (!opModeIsActive()) {
                     return;
                 }
@@ -535,7 +536,7 @@ public class NewCraterRegionals extends LinearOpMode {
                 leftRear.setPower(-leftSpeed);
                 rightRear.setPower(-rightSpeed);
 
-                telemetry.addData("encoder value", leftRear.getCurrentPosition());
+                telemetry.addData("encoder value LR", leftRear.getCurrentPosition());
                 telemetry.update();
                 sleep(50);
             }
@@ -808,7 +809,7 @@ public class NewCraterRegionals extends LinearOpMode {
         double rightSpeed;
         double headingAngle;
 
-        double frontWheelConstant = 1.15;
+        double frontWheelConstant = 1;
         double encoderCount = inches * COUNTS_PER_INCH;
         double target = angle;
         double error;

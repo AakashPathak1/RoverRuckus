@@ -63,7 +63,7 @@ public class NewDepotRegionals extends LinearOpMode {
     Servo colLeft;
     Servo colRight;
 
-    DigitalChannel digitalTouch;  // Hardware Device Object
+    DigitalChannel downStop;  // Hardware Device Object
 
     boolean testMode = false;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -147,10 +147,10 @@ public class NewDepotRegionals extends LinearOpMode {
         colLeft = hardwareMap.servo.get("colLeft");
         colRight = hardwareMap.servo.get("colRight");
 
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
+        downStop = hardwareMap.get(DigitalChannel.class, "downStop");
 
         // set the digital channel to input.
-        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+        downStop.setMode(DigitalChannel.Mode.INPUT);
 
         telemetry.update();
 
@@ -234,11 +234,14 @@ public class NewDepotRegionals extends LinearOpMode {
         pullUp.setPower(-1.0);
 
         //runtime.reset();
-        while (digitalTouch.getState() == true && opModeIsActive()) {
-            telemetry.addData("Digital Touch", "Is Not Pressed");
+        while (downStop.getState() == true && opModeIsActive()) {
+            if (!opModeIsActive()) {
+                return;
+            }
+            telemetry.addData("downStop", "Is Not Pressed");
             sleep(10);
         }
-        telemetry.addData("Digital Touch", "Is Pressed");
+        telemetry.addData("downStop", "Is Pressed");
 
         pullUp.setPower(0.0);
 
@@ -491,7 +494,7 @@ public class NewDepotRegionals extends LinearOpMode {
 
         if(encoderCount > 0) {
 
-            while ((leftRear.getCurrentPosition() < (encoderCount + startPosition)) && opModeIsActive()) {
+            while ((leftRear.getCurrentPosition() < (encoderCount + startPosition))) {
                 if (!opModeIsActive()) {
                     return;
                 }
@@ -545,7 +548,7 @@ public class NewDepotRegionals extends LinearOpMode {
                 leftRear.setPower(-leftSpeed);
                 rightRear.setPower(-rightSpeed);
 
-                telemetry.addData("encoder value", leftRear.getCurrentPosition());
+                telemetry.addData("encoder value LR", leftRear.getCurrentPosition());
                 telemetry.update();
                 sleep(50);
             }
@@ -818,7 +821,7 @@ public class NewDepotRegionals extends LinearOpMode {
         double rightSpeed;
         double headingAngle;
 
-        double frontWheelConstant = 1.15;
+        double frontWheelConstant = 1;
         double encoderCount = inches * COUNTS_PER_INCH;
         double target = angle;
         double error;

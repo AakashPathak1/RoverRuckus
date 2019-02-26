@@ -44,12 +44,12 @@ public class FinalTeleOp extends LinearOpMode {
     DcMotor extender;
     double extenderPower;
 
-
     DcMotor arm;
     double armPower;
 
-    CRServo intake;
+    DcMotor intake;
 
+    Servo stopper;
 
     boolean slowMode = false;
 
@@ -79,7 +79,9 @@ public class FinalTeleOp extends LinearOpMode {
         pullUp = hardwareMap.dcMotor.get("pullUp");
         arm = hardwareMap.dcMotor.get("arm");
         extender = hardwareMap.dcMotor.get("extender");
-        intake = hardwareMap.crservo.get("intake");
+        intake = hardwareMap.dcMotor.get("intake");
+
+        stopper = hardwareMap.servo.get("stopper");
 
 
 
@@ -107,7 +109,11 @@ public class FinalTeleOp extends LinearOpMode {
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        sleep(200);
+        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        stopper.setPosition(0.0);
 
 
 
@@ -151,22 +157,34 @@ public class FinalTeleOp extends LinearOpMode {
             if (gamepad1.a) {
                 slowMode  = !slowMode;
                 sleep(300);
-
             }
+
+             if (gamepad1.y) {
+                stopper.setPosition(1.0);
+             }
+
+             if (gamepad1.x) {
+                stopper.setPosition(0.0);
+             }
+
+
+
+
+
+            telemetry.addData("Arm Emcoder Position : ", arm.getCurrentPosition());
 
 
 
 
             telemetry.addData("Slow Mode : ", slowMode);
-            telemetry.update();
 
-            if (gamepad2.x) {
-                intake.setPower(1);
-            } else if (gamepad2.y) {
-                intake.setPower(-1);
-            } else {
-                intake.setPower(0);
-            }
+           if (gamepad2.y) {
+               intake.setPower(1);
+           } else if (gamepad2.x) {
+               intake.setPower(-1);
+           } else {
+               intake.setPower(0);
+           }
 
 
 
@@ -196,6 +214,16 @@ public class FinalTeleOp extends LinearOpMode {
             }
             armPower = -gamepad2.right_stick_y;
 
+            if (armPower != 0) {
+               arm.setPower(armPower);
+            } else if (armPower == 0) {
+               if (arm.getCurrentPosition() > -420) {
+                   arm.setPower(-0.15);
+               } else {
+                   arm.setPower(Math.abs(arm.getCurrentPosition() / 3000.0));
+               }
+            }
+
 
 //            if (armPower > 0.7) {
 //                armPower = 0.7;
@@ -203,45 +231,49 @@ public class FinalTeleOp extends LinearOpMode {
 //            } else if (armPower < -0.7) {
 //                armPower = -0.7;
 //                arm.setPower(armPower);
-            if (armPower == 0 && armSensor.getState()) {
-                arm.setPower(-0.1);
-            } else {
-                arm.setPower(armPower);
-            }
+//            if (armPower == 0 && armSensor.getState()) {
+//                arm.setPower(-0.1);
+//            } else {
+//                arm.setPower(armPower);
+//            }
 
-            if ((gamepad2.a) && (!armSensor.getState())) {
-                armMove(1000, 1, 5);
+            if ((gamepad2.a)/* && (!armSensor.getState())*/) {
+                armMove(-200, 1, 5);
             }
 
             telemetry.addData("Motor Encoder Position: ", arm.getCurrentPosition());
             telemetry.addData("motor power", arm.getPower());
-            telemetry.update();
 
             if (gamepad2.dpad_up) {
-                extender.setPower(1);
+                extender.setPower(-1);
             }
             else if (gamepad2.dpad_down) {
-                extender.setPower(-1);
+                extender.setPower(1);
             } else {
                 extender.setPower(0);
             }
+
+            telemetry.update();
 
 
         }
 
     }
 
-    public void armMove(int position, double speed, double timeout) {
+    public void armMove(int target, double speed, double timeout) {
         runtime.reset();
 
 
         double startPosition = arm.getCurrentPosition();
 
-        if(position > 0) {
+        if(startPosition < target) {
 
             arm.setPower(speed);
 
-            while ((arm.getCurrentPosition() < startPosition + position) && (runtime.seconds() < timeout)) {
+            while ((arm.getCurrentPosition() < target) && (runtime.seconds() < timeout)) {
+                if (!opModeIsActive()) {
+                    return;
+                }
 
                 telemetry.addData("encoder value", arm.getCurrentPosition());
                 telemetry.update();
@@ -249,19 +281,14 @@ public class FinalTeleOp extends LinearOpMode {
             }
         }
 
-        else if(position < 0) {
+        else if(startPosition > target) {
 
             arm.setPower(-speed);
 
-            while ((arm.getCurrentPosition() > + startPosition - position) && (runtime.seconds() < timeout)) {
-
-                telemetry.addData("encoder value", arm.getCurrentPosition());
-                telemetry.update();
-            }
-        } else if (position == 0) {
-            arm.setPower(-speed);
-
-            while ((arm.getCurrentPosition() > position) && (runtime.seconds() < timeout)) {
+            while ((arm.getCurrentPosition() > target) && (runtime.seconds() < timeout)) {
+                if (!opModeIsActive()) {
+                    return;
+                }
 
                 telemetry.addData("encoder value", arm.getCurrentPosition());
                 telemetry.update();
