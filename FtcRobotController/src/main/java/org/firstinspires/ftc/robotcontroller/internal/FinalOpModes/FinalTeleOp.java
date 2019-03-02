@@ -51,7 +51,12 @@ public class FinalTeleOp extends LinearOpMode {
 
     Servo stopper;
 
+    Servo depotLock;
+
+    Servo marker;
+
     boolean slowMode = false;
+    boolean scooperToggle = false;
 
     DigitalChannel upStop;  // Hardware Device Object
     DigitalChannel downStop;  // Hardware Device Object
@@ -82,8 +87,8 @@ public class FinalTeleOp extends LinearOpMode {
         intake = hardwareMap.dcMotor.get("intake");
 
         stopper = hardwareMap.servo.get("stopper");
-
-
+        depotLock = hardwareMap.servo.get("depotLock");
+        marker = hardwareMap.servo.get("marker");
 
         upStop = hardwareMap.get(DigitalChannel.class, "upStop");
         downStop = hardwareMap.get(DigitalChannel.class, "downStop");
@@ -114,6 +119,8 @@ public class FinalTeleOp extends LinearOpMode {
         arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         stopper.setPosition(0.0);
+
+        marker.setPosition(1); //inside position
 
 
 
@@ -159,33 +166,37 @@ public class FinalTeleOp extends LinearOpMode {
                 sleep(300);
             }
 
-             if (gamepad1.y) {
+            if (gamepad1.y) {
                 stopper.setPosition(1.0);
-             }
+            }
 
-             if (gamepad1.x) {
+            if (gamepad1.x) {
                 stopper.setPosition(0.0);
-             }
+            }
 
-
+            marker.setPosition(1); //inside position
 
 
 
             telemetry.addData("Arm Emcoder Position : ", arm.getCurrentPosition());
 
 
-
-
             telemetry.addData("Slow Mode : ", slowMode);
 
-           if (gamepad2.y) {
-               intake.setPower(1);
-           } else if (gamepad2.x) {
-               intake.setPower(-1);
-           } else {
-               intake.setPower(0);
-           }
+            telemetry.addData("Scooper Toggle : ", scooperToggle);
 
+
+
+
+
+
+
+            if (gamepad2.dpad_right) {
+                depotLock.setPosition(0);
+            }
+            if (gamepad2.dpad_left) {
+                depotLock.setPosition(1);
+            }
 
 
             // if the digital channel returns true it's HIGH and the button is unpressed.
@@ -213,32 +224,43 @@ public class FinalTeleOp extends LinearOpMode {
                 }
             }
             armPower = -gamepad2.right_stick_y;
-
-            if (armPower != 0) {
-               arm.setPower(armPower);
-            } else if (armPower == 0) {
-               if (arm.getCurrentPosition() > -420) {
-                   arm.setPower(-0.15);
-               } else {
-                   arm.setPower(Math.abs(arm.getCurrentPosition() / 3000.0));
-               }
-            }
+            arm.setPower(armPower);
 
 
-//            if (armPower > 0.7) {
-//                armPower = 0.7;
-//                arm.setPower(armPower);
-//            } else if (armPower < -0.7) {
-//                armPower = -0.7;
-//                arm.setPower(armPower);
-//            if (armPower == 0 && armSensor.getState()) {
-//                arm.setPower(-0.1);
-//            } else {
-//                arm.setPower(armPower);
+//            if (armPower != 0) {
+//               arm.setPower(armPower);
+//            } else if (armPower == 0) {
+//               if (arm.getCurrentPosition() > -420) {
+//                   arm.setPower(-0.15);
+//               } else {
+//                   arm.setPower(Math.abs(arm.getCurrentPosition() / 3000.0));
+//               }
 //            }
 
-            if ((gamepad2.a)/* && (!armSensor.getState())*/) {
-                armMove(-200, 1, 5);
+
+//            if ((gamepad2.a)/* && (!armSensor.getState())*/) {
+//                armMove(-200, 1, 5);
+//            }
+
+            if (gamepad2.a) {
+                scooperToggle = !scooperToggle;
+                sleep(200);
+            }
+
+            if (gamepad2.b && !scooperToggle) {
+                intake.setPower(-0.25);
+            }
+
+            if (gamepad2.x && !scooperToggle) {
+                intake.setPower(0.25);
+            }
+
+            if (scooperToggle) {
+                intake.setPower(0.8);
+            }
+
+            if (!scooperToggle && !gamepad2.a && !gamepad2.x && !gamepad2.b) {
+                intake.setPower(0);
             }
 
             telemetry.addData("Motor Encoder Position: ", arm.getCurrentPosition());
@@ -248,7 +270,7 @@ public class FinalTeleOp extends LinearOpMode {
                 extender.setPower(-1);
             }
             else if (gamepad2.dpad_down) {
-                extender.setPower(1);
+                extender.setPower(0.6);
             } else {
                 extender.setPower(0);
             }

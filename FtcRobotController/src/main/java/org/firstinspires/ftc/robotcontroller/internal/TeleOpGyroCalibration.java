@@ -126,10 +126,10 @@ public class TeleOpGyroCalibration extends LinearOpMode {
                 gyroDrive(DRIVE_SPEED, -12, 0, 5);
             }
             if (gamepad1.dpad_right) {
-                gyroSideDrive(0.4, 12, 0, 5);
+                gyroSideDrive(0.6, 18, 0, 5);
             }
             if (gamepad1.dpad_left) {
-                gyroSideDrive(0.4, -12, 0, 5);
+                gyroSideDrive(0.6, -18, 0, 5);
             }
 
             telemetry.addData("rf: ", rightFront.getPower());
@@ -491,7 +491,7 @@ public class TeleOpGyroCalibration extends LinearOpMode {
         double rightSpeed;
         double headingAngle;
 
-        double rearWheelConstant = 1.13;
+        double rearWheelConstant = 1;
         double encoderCount = inches * COUNTS_PER_INCH;
         double target = angle;
         double error;
@@ -569,6 +569,7 @@ public class TeleOpGyroCalibration extends LinearOpMode {
         leftRear.setPower(0);
         rightRear.setPower(0);
 
+        sleep(150);
         gyroTurn(MINIMUM_TURN_SPEED, angle, angle, 7);
 
 

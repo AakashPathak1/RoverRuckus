@@ -60,12 +60,11 @@ public class NewCraterRegionals extends LinearOpMode {
     DcMotor pullUp;
 
     Servo marker;
-    Servo colLeft;
-    Servo colRight;
+
 
     DigitalChannel downStop;  // Hardware Device Object
 
-    boolean testMode = true;
+    boolean testMode = false;
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -144,8 +143,7 @@ public class NewCraterRegionals extends LinearOpMode {
         pullUp = hardwareMap.dcMotor.get("pullUp");;
 
         marker = hardwareMap.servo.get("marker");
-        colLeft = hardwareMap.servo.get("colLeft");
-        colRight = hardwareMap.servo.get("colRight");
+
 
         downStop = hardwareMap.get(DigitalChannel.class, "downStop");
 
@@ -173,10 +171,9 @@ public class NewCraterRegionals extends LinearOpMode {
         telemetry.update();
         headingAngle = angles.firstAngle;
 
-        marker.setPosition(0);
+        marker.setPosition(1);
 
-        colLeft.setPosition(0);
-        colRight.setPosition(1);
+
 
         leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -217,10 +214,9 @@ public class NewCraterRegionals extends LinearOpMode {
                 }
             });
 
-            marker.setPosition(0);
+            marker.setPosition(1);
 
-            colLeft.setPosition(0);
-            colRight.setPosition(1);
+
 
             telemetry.update();
         }
@@ -232,52 +228,6 @@ public class NewCraterRegionals extends LinearOpMode {
                 }
             }
         }
-
-        //Drop down from Lander
-
-//        pullUp.setPower(-1.0);
-//        //runtime.reset();
-//        while (downStop.getState() == true && opModeIsActive()) {
-//            if (!opModeIsActive()) {
-//                return;
-//            }
-//            telemetry.addData("Down Stop", "Is Not Pressed");
-//            sleep(10);
-//        }
-//        telemetry.addData("Down Stop", "Is Pressed");
-//
-//        pullUp.setPower(0.0);
-//
-//        if (testMode) {
-//            while (!gamepad1.y) {
-//                if (!opModeIsActive()) {
-//                    return;
-//                }
-//            }
-//        }
-
-        //Drive forward to remove hook
-        gyroDrive(DRIVE_SPEED,-1, 0, 5);
-
-        if (testMode) {
-            while (!gamepad1.y) {
-                if (!opModeIsActive()) {
-                    return;
-                }
-            }
-        }
-
-        //Drive away from the lander
-        gyroSideDrive(0.4, -8, 0, 10);
-
-        if (testMode) {
-            while (!gamepad1.y) {
-                if (!opModeIsActive()) {
-                    return;
-                }
-            }
-        }
-
         //start vision
         initVuforia();
 
@@ -289,7 +239,66 @@ public class NewCraterRegionals extends LinearOpMode {
 
         /** Activate Tensor Flow Object Detection. */
         tfod.activate();
-        sleep(1000);
+
+        //Drop down from Lander
+
+        pullUp.setPower(-1.0);
+        //runtime.reset();
+        while (downStop.getState() == true && opModeIsActive()) {
+            if (!opModeIsActive()) {
+                return;
+            }
+            telemetry.addData("Down Stop", "Is Not Pressed");
+            sleep(10);
+        }
+        telemetry.addData("Down Stop", "Is Pressed");
+
+        pullUp.setPower(0.0);
+
+        if (testMode) {
+            while (!gamepad1.y) {
+                if (!opModeIsActive()) {
+                    return;
+                }
+            }
+        }
+
+        //Drive forward to remove hook
+        gyroDrive(DRIVE_SPEED,-4, 0, 5);
+        sleep(200);
+
+        if (testMode) {
+            while (!gamepad1.y) {
+                if (!opModeIsActive()) {
+                    return;
+                }
+            }
+        }
+
+        //Drive away from the lander
+        gyroSideDrive(0.6, -8, 10);
+        sleep(100);
+
+        if (testMode) {
+            while (!gamepad1.y) {
+                if (!opModeIsActive()) {
+                    return;
+                }
+            }
+        }
+
+//        //start vision
+//        initVuforia();
+//
+//        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+//            initTfod();
+//        } else {
+//            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+//        }
+//
+//        /** Activate Tensor Flow Object Detection. */
+//        tfod.activate();
+//        sleep(1000);
 
         if (testMode) {
             while (!gamepad1.y) {
@@ -303,14 +312,15 @@ public class NewCraterRegionals extends LinearOpMode {
         boolean hitGold = false;
         int position = 0;
 
+        sleep(500);
         //Check if middle mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
-            gyroDrive(DRIVE_SPEED,2,0,10);
+            gyroDrive(DRIVE_SPEED,4,0,10);
             sleep(200);
-            gyroSideDrive(0.4, -18, 0, 10);
+            gyroSideDrive(0.6, -18, 0, 10);
             sleep(200);
-            gyroSideDrive(0.4, 11, 0, 10);
+            gyroSideDrive(0.6, 5, 0, 10);
 
             position = 2;
             hitGold = true;
@@ -332,8 +342,10 @@ public class NewCraterRegionals extends LinearOpMode {
         //Check if right mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
-            gyroSideDrive(DRIVE_SPEED, -22, -42, 10);
-            gyroSideDrive(DRIVE_SPEED, 10, -42, 10);
+            gyroDrive(DRIVE_SPEED,4,-42,10);
+            sleep(200);
+            gyroSideDrive(0.6, -19, -42, 10);
+            gyroSideDrive(0.6, 11, -42, 10);
 
             position = 1;
             hitGold = true;
@@ -356,8 +368,11 @@ public class NewCraterRegionals extends LinearOpMode {
 //        }
         if (!hitGold) {
             gyroTurn(TURN_SPEED, 45, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, -24, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, 14, 45, 10);
+            sleep(200);
+            gyroDrive(DRIVE_SPEED,4,45,10);
+            sleep(200);
+            gyroSideDrive(0.6, -30, 45, 10);
+            gyroSideDrive(0.6, 10, 45, 10);
             position = 3;
         }
 
@@ -383,7 +398,7 @@ public class NewCraterRegionals extends LinearOpMode {
 
         //Drive to wall
 
-        gyroDrive(DRIVE_SPEED,35, 0, 10);
+        gyroDrive(DRIVE_SPEED,34, 0, 10);
 
 
         if (testMode) {
@@ -394,9 +409,9 @@ public class NewCraterRegionals extends LinearOpMode {
             }
         }
 
-        //Turn to 45 to ram
+        //Turn to 135 to ram
 
-        gyroTurn(TURN_SPEED,45,45,10);
+        gyroTurn(TURN_SPEED,-135,45,10);
 
         if (testMode) {
             while (!gamepad1.y) {
@@ -407,7 +422,7 @@ public class NewCraterRegionals extends LinearOpMode {
         }
 
         //RAM WALLLLLLLLLLLL
-        gyroSideDrive(DRIVE_SPEED, -24, 10);
+        gyroSideDrive(0.5, 24, 10);
 
         if (testMode) {
             while (!gamepad1.y) {
@@ -417,12 +432,12 @@ public class NewCraterRegionals extends LinearOpMode {
             }
         }
         //Back up to Depot (Stop using light sensor)
-        leftFront.setPower(0.5);
-        leftRear.setPower(0.5);
-        rightFront.setPower(0.5);
-        rightRear.setPower(0.5);
+        leftFront.setPower(-0.5);
+        leftRear.setPower(-0.5);
+        rightFront.setPower(-0.5);
+        rightRear.setPower(-0.5);
 
-        while (hsvValues[0] < 150 && hsvValues[0] > 40) {
+        while ((Math.abs(sensorColor.red() - sensorColor.blue()) < 5) && opModeIsActive()) {
             // convert the RGB values to HSV values.
             // multiply by the SCALE_FACTOR.
             // then cast it back to int (SCALE_FACTOR is a double)
@@ -430,7 +445,8 @@ public class NewCraterRegionals extends LinearOpMode {
                     (int) (sensorColor.green() * SCALE_FACTOR),
                     (int) (sensorColor.blue() * SCALE_FACTOR),
                     hsvValues);
-            telemetry.addData("Hue", hsvValues[0]);
+            telemetry.addData("Red", sensorColor.red());
+            telemetry.addData("Blue", sensorColor.blue());
             telemetry.update();
             sleep(10);
         }
@@ -449,9 +465,9 @@ public class NewCraterRegionals extends LinearOpMode {
         }
 
         //Place marker
-        marker.setPosition(1);
+        marker.setPosition(0.15); //outside
         sleep(700);
-        marker.setPosition(0);
+        marker.setPosition(1); //inside
 
 
         if (testMode) {
@@ -464,7 +480,44 @@ public class NewCraterRegionals extends LinearOpMode {
 
         //Drive Toward the Crater
 
-        gyroDrive(0.5,-62,10);
+        gyroDrive(0.4, 68, 10);
+
+//        gyroDrive(0.8,37,10);
+
+//        if (testMode) {
+//            while (!gamepad1.y) {
+//                if (!opModeIsActive()) {
+//                    return;
+//                }
+//            }
+//        }
+//
+//        // UN-RAM WALLLLLLLLLLLL
+//        gyroSideDrive(0.5, -6,-135,  10);
+//
+//        if (testMode) {
+//            while (!gamepad1.y) {
+//                if (!opModeIsActive()) {
+//                    return;
+//                }
+//            }
+//        }
+//
+//        gyroTurn(0.4, 45, 35, 10);
+//
+//        if (testMode) {
+//            while (!gamepad1.y) {
+//                if (!opModeIsActive()) {
+//                    return;
+//                }
+//            }
+//        }
+//
+//        // RAM WALLLLLLLLLLLL AGAIN
+//        gyroSideDrive(0.5, -6,45,  10);
+//
+//        //Drive toward the crater
+//        gyroDrive(0.8,-25,10);
 
     }
 
@@ -547,6 +600,8 @@ public class NewCraterRegionals extends LinearOpMode {
         leftRear.setPower(0);
         rightRear.setPower(0);
 
+        sleep(100);
+
         gyroTurn(MINIMUM_TURN_SPEED, angle,  angle, 7);
 
     }
@@ -602,6 +657,7 @@ public class NewCraterRegionals extends LinearOpMode {
 
         sleep(50);
     }
+
 
     public void gyroTurn (double speed, double targetAngle, double startSpeedCorrection, double timeout) {
         double currentSpeed;
@@ -801,7 +857,6 @@ public class NewCraterRegionals extends LinearOpMode {
     }
 
 
-
     public void gyroSideDrive(double speed, double inches, double angle, double timeout) {
         //-inches = left
         //+inches = right
@@ -809,7 +864,7 @@ public class NewCraterRegionals extends LinearOpMode {
         double rightSpeed;
         double headingAngle;
 
-        double frontWheelConstant = 1;
+        double rearWheelConstant = 1;
         double encoderCount = inches * COUNTS_PER_INCH;
         double target = angle;
         double error;
@@ -819,10 +874,10 @@ public class NewCraterRegionals extends LinearOpMode {
 
         if(encoderCount > 0) {
 
-            leftFront.setPower(-speed*frontWheelConstant);
-            rightFront.setPower(speed*frontWheelConstant);
-            leftRear.setPower(speed);
-            rightRear.setPower(-speed);
+            leftFront.setPower(-speed);
+            rightFront.setPower(speed);
+            leftRear.setPower(speed*rearWheelConstant);
+            rightRear.setPower(-speed*rearWheelConstant);
 
             while (leftRear.getCurrentPosition() < (encoderCount + startPosition)) {
                 if (!opModeIsActive()) {
@@ -852,10 +907,10 @@ public class NewCraterRegionals extends LinearOpMode {
 
         else if(encoderCount < 0) {
 
-            leftFront.setPower(speed*frontWheelConstant);
-            rightFront.setPower(-speed*frontWheelConstant);
-            leftRear.setPower(-speed);
-            rightRear.setPower(speed);
+            leftFront.setPower(speed);
+            rightFront.setPower(-speed);
+            leftRear.setPower(-speed*rearWheelConstant);
+            rightRear.setPower(speed*rearWheelConstant);
 
             while (leftRear.getCurrentPosition() > (encoderCount + startPosition)) {
                 if (!opModeIsActive()) {
@@ -887,6 +942,7 @@ public class NewCraterRegionals extends LinearOpMode {
         leftRear.setPower(0);
         rightRear.setPower(0);
 
+        sleep(150);
         gyroTurn(MINIMUM_TURN_SPEED, angle, angle, 7);
 
 
