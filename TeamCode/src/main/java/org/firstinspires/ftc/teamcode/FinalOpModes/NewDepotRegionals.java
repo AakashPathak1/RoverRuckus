@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
+package org.firstinspires.ftc.teamcode.FinalOpModes;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Locale;
 
 
-@Autonomous(name="NewCraterRegionals", group="Pushbot")
-public class NewCraterRegionals extends LinearOpMode {
+@Autonomous(name="NewDepotRegionals", group="Pushbot")
+public class NewDepotRegionals extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
     Acceleration gravity;
@@ -264,7 +264,7 @@ public class NewCraterRegionals extends LinearOpMode {
         }
 
         //Drive forward to remove hook
-        gyroDrive(DRIVE_SPEED,-4, 0, 5);
+        gyroSideDrive(DRIVE_SPEED,-2.5, 0, 5);
         sleep(200);
 
         if (testMode) {
@@ -276,8 +276,8 @@ public class NewCraterRegionals extends LinearOpMode {
         }
 
         //Drive away from the lander
-        gyroSideDrive(0.6, -8, 10);
-        sleep(100);
+        gyroDrive(0.6, -8, 0, 10);
+        sleep(200);
 
         if (testMode) {
             while (!gamepad1.y) {
@@ -312,15 +312,14 @@ public class NewCraterRegionals extends LinearOpMode {
         boolean hitGold = false;
         int position = 0;
 
-        sleep(500);
         //Check if middle mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
-            gyroDrive(DRIVE_SPEED,4,0,10);
+            gyroSideDrive(DRIVE_SPEED,3,0,10);
             sleep(200);
-            gyroSideDrive(0.6, -18, 0, 10);
+            gyroDrive(0.6, -22, 0, 10);
             sleep(200);
-            gyroSideDrive(0.6, 5, 0, 10);
+            gyroDrive(0.6, 9, 0, 10);
 
             position = 2;
             hitGold = true;
@@ -342,10 +341,10 @@ public class NewCraterRegionals extends LinearOpMode {
         //Check if right mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
-            gyroDrive(DRIVE_SPEED,4,-42,10);
+            gyroSideDrive(DRIVE_SPEED,4,-42,10);
             sleep(200);
-            gyroSideDrive(0.6, -19, -42, 10);
-            gyroSideDrive(0.6, 11, -42, 10);
+            gyroDrive(0.6, -19, -42, 10);
+            gyroDrive(0.6, 11, -42, 10);
 
             position = 1;
             hitGold = true;
@@ -367,12 +366,12 @@ public class NewCraterRegionals extends LinearOpMode {
 //            hitGold = true;
 //        }
         if (!hitGold) {
-            gyroTurn(TURN_SPEED, 45, 45, 10);
+            gyroTurn(TURN_SPEED, 37, 37, 10);
             sleep(200);
-            gyroDrive(DRIVE_SPEED,4,45,10);
+            gyroSideDrive(DRIVE_SPEED,4,37,10);
             sleep(200);
-            gyroSideDrive(0.6, -30, 45, 10);
-            gyroSideDrive(0.6, 10, 45, 10);
+            gyroDrive(0.6, -30, 37, 10);
+            gyroDrive(0.6, 10, 37, 10);
             position = 3;
         }
 
@@ -398,7 +397,7 @@ public class NewCraterRegionals extends LinearOpMode {
 
         //Drive to wall
 
-        gyroDrive(DRIVE_SPEED,34, 0, 10);
+        gyroSideDrive(DRIVE_SPEED,30, 0, 10);
 
 
         if (testMode) {
@@ -409,9 +408,9 @@ public class NewCraterRegionals extends LinearOpMode {
             }
         }
 
-        //Turn to 135 to ram
+        //Turn to 45 to ram
 
-        gyroTurn(TURN_SPEED,-135,45,10);
+        gyroTurn(TURN_SPEED,45,45,10);
 
         if (testMode) {
             while (!gamepad1.y) {
@@ -420,9 +419,11 @@ public class NewCraterRegionals extends LinearOpMode {
                 }
             }
         }
+
+        gyroTurn(TURN_SPEED, 180, 180, 20);
 
         //RAM WALLLLLLLLLLLL
-        gyroSideDrive(0.5, 24, 10);
+        gyroDrive(0.5, 24, 10);
 
         if (testMode) {
             while (!gamepad1.y) {
@@ -432,10 +433,10 @@ public class NewCraterRegionals extends LinearOpMode {
             }
         }
         //Back up to Depot (Stop using light sensor)
-        leftFront.setPower(-0.5);
-        leftRear.setPower(-0.5);
-        rightFront.setPower(-0.5);
-        rightRear.setPower(-0.5);
+        leftFront.setPower(0.4);
+        leftRear.setPower(-0.4);
+        rightFront.setPower(-0.4);
+        rightRear.setPower(0.4);
 
         while ((Math.abs(sensorColor.red() - sensorColor.blue()) < 5) && opModeIsActive()) {
             // convert the RGB values to HSV values.
@@ -480,7 +481,7 @@ public class NewCraterRegionals extends LinearOpMode {
 
         //Drive Toward the Crater
 
-        gyroDrive(0.4, 68, 10);
+        gyroSideDrive(0.35, 68, 10);
 
 //        gyroDrive(0.8,37,10);
 

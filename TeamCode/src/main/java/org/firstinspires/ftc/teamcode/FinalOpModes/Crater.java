@@ -1,148 +1,32 @@
-package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
+package org.firstinspires.ftc.teamcode.FinalOpModes;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
 import org.firstinspires.ftc.robotcontroller.internal.ThreeBlockYellowVision;
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
-
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-
-import java.sql.Driver;
-import java.util.List;
-import java.util.Locale;
-
-
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.List;
+import java.util.Locale;
 
-//@Autonomous(name="Depot", group="Pushbot")
-public class Depot extends LinearOpMode {
-    BNO055IMU imu;
-    Orientation angles;
-    Acceleration gravity;
-    static final double     TURN_SPEED              = 0.2;     // Nominal half speed for better accuracy.
-    static final double     MINIMUM_TURN_SPEED      = 0.2;
-    static final double     DRIVE_SPEED             = 0.3;
-    static final double APPROACH_SPEED = 0.2;
-    static final double SPEED_FACTOR = 1.0;
-    static final double COUNTS_PER_MOTOR_REV = 537.6;    //  Neverest 20 Motor Encoder
-    static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
-    static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
-    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * Math.PI);
-    private ElapsedTime     runtime = new ElapsedTime();
+@Disabled
+//@Autonomous(name="Crater", group="Pushbot")
+public class Crater extends Base {
 
-    DcMotor leftFront;
-    DcMotor rightFront;
-    DcMotor leftRear;
-    DcMotor rightRear;
-    DcMotor scoopLifter;
-
-    DcMotor arm1;
-    DcMotor arm2;
-
-    Servo leftLatch;
-    Servo rightLatch;
-    Servo marker;
-    int armPos;
-    int armPos2;
-
-    boolean testMode = false;
-    BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-
-    private ThreeBlockYellowVision yellowVision;
 
 
     @Override
     public void runOpMode() {
 
-        double headingAngle;
-        parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-        composeTelemetry();
-        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        gravity  = imu.getGravity();
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-
-        leftFront = hardwareMap.dcMotor.get("leftFront");
-        rightFront = hardwareMap.dcMotor.get("rightFront");
-        leftRear = hardwareMap.dcMotor.get("leftRear");
-        rightRear = hardwareMap.dcMotor.get("rightRear");
-        arm1 = hardwareMap.dcMotor.get("arm1");
-        arm2 = hardwareMap.dcMotor.get("arm2");
-        scoopLifter = hardwareMap.dcMotor.get("scoopLifter");
-        leftLatch = hardwareMap.servo.get("leftLatch");
-        rightLatch = hardwareMap.servo.get("rightLatch");
-        marker = hardwareMap.servo.get("marker");
-
-        telemetry.update();
-
-        while (!isStopRequested() && imu.isGyroCalibrated())  {
-            sleep(50);
-            idle();
-        }
-
-        arm2.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        arm1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        arm2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        scoopLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-        telemetry.addData(">", "Robot Ready.");    //
-        telemetry.update();
-        headingAngle = angles.firstAngle;
-
-        leftLatch.setPosition(1);
-        rightLatch.setPosition(0.0);
-        marker.setPosition(0);
-
-        leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        arm1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-
-        telemetry.update();
+        super.runOpMode();
 
         yellowVision = new ThreeBlockYellowVision();
         // can replace with ActivityViewDisplay.getInstance() for fullscreen
@@ -152,9 +36,9 @@ public class Depot extends LinearOpMode {
         yellowVision.enable();
 
         while (!isStarted()) {
-            leftLatch.setPosition(1);
-            rightLatch.setPosition(0.0);
-            marker.setPosition(0);
+//            leftLatch.setPosition(1);
+//            rightLatch.setPosition(0.0);
+//            marker.setPosition(0);
 
             scoopLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -185,7 +69,6 @@ public class Depot extends LinearOpMode {
 
         }
 //        Begin Program
-        //sleep(17000);
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
                 sleep(10);
@@ -194,72 +77,71 @@ public class Depot extends LinearOpMode {
             sleep(10);
         }
         //Remove Latch
-        arm1.setPower(-0.5);
-        arm2.setPower(-0.5);
-        sleep(500);
-        leftLatch.setPosition(0.5);
-        rightLatch.setPosition(0.4);
-        sleep(500);
-        arm1.setPower(-0.5);
-        arm2.setPower(-0.5);
-        sleep(500);
-        if (testMode) {
-            while (!gamepad1.y && opModeIsActive()) {
-                sleep(10);
-            }
-        } else {
-            sleep(10);
-        }
-        arm1.setPower(0.0);
-        arm2.setPower(0.0);
-        //Drop down from Lander
-        armMove(3450, 0.5, 5);
-
-        sleep(200);
-
-        if (testMode) {
-            while (!gamepad1.y && opModeIsActive()) {
-                sleep(10);
-            }
-        } else {
-            sleep(10);
-        }
-
-        //Drive left to remove hook
-        gyroSideDrive(DRIVE_SPEED, -2, 0, 7);
-
-        if (testMode) {
-            while (!gamepad1.y && opModeIsActive()) {
-                sleep(10);
-            }
-        } else {
-            sleep(10);
-        }
-
-        // Drive away from the lander
-        gyroDrive(DRIVE_SPEED, 3, 0, 10);
-
-        if (testMode) {
-            while (!gamepad1.y && opModeIsActive()) {
-                sleep(10);
-            }
-        }
-
-        //Side drive back to the original position after it got off the hook
-        gyroSideDrive(DRIVE_SPEED, 2, 0, 7);
-
-        if (testMode) {
-            while (!gamepad1.y && opModeIsActive()) {
-                sleep(10);
-            }
-        }
+//        arm1.setPower(-0.5);
+//        arm2.setPower(-0.5);
+//        sleep(500);
+//        leftLatch.setPosition(0.5);
+//        rightLatch.setPosition(0.4);
+//        sleep(500);
+//        arm1.setPower(-0.5);
+//        arm2.setPower(-0.5);
+//        sleep(500);
+//        if (testMode) {
+//            while (!gamepad1.y && opModeIsActive()) {
+//                sleep(10);
+//            }
+//        } else {
+//            sleep(10);
+//        }
+//        arm1.setPower(0.0);
+//        arm2.setPower(0.0);
+//        //Drop down from Lander
+//        armMove(3450, 0.5, 5);
+//
+//        sleep(200);
+//
+//        if (testMode) {
+//            while (!gamepad1.y && opModeIsActive()) {
+//                sleep(10);
+//            }
+//        } else {
+//            sleep(10);
+//        }
+//
+//        //Drive left to remove hook
+//        gyroSideDrive(DRIVE_SPEED, -2, 0, 7);
+//
+//        if (testMode) {
+//            while (!gamepad1.y && opModeIsActive()) {
+//                sleep(10);
+//            }
+//        } else {
+//            sleep(10);
+//        }
+//
+//        // Drive away from the lander
+//        gyroDrive(DRIVE_SPEED, 3, 0, 10);
+//
+//        if (testMode) {
+//            while (!gamepad1.y && opModeIsActive()) {
+//                sleep(10);
+//            }
+//        }
+//
+//        //Side drive back to the original position after it got off the hook
+//        gyroSideDrive(DRIVE_SPEED, 2, 0, 7);
+//
+//        if (testMode) {
+//            while (!gamepad1.y && opModeIsActive()) {
+//                sleep(10);
+//            }
+//        }
         //Drive forward to the middle mineral
-        gyroDrive(DRIVE_SPEED, 3.5, 0, 3);
+        gyroDrive(DRIVE_SPEED, 6, 0, 3);
         //resetGyro();
 
         //adjust center of mass
-        armMove(-2500, 0.5, 5);
-
+        //armMove(-2000, 0.5, 5);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -278,12 +160,12 @@ public class Depot extends LinearOpMode {
             straightenGold(TURN_SPEED);
             //Hit the gold
             gyroDrive(DRIVE_SPEED, 10, 0, 10);
-            gyroDrive(DRIVE_SPEED, -14, 0, 10);
+            gyroDrive(DRIVE_SPEED, -10, 0, 10);
             hitGold = true;
             position = 2;
         } else {
             //Drive to the right mineral
-            gyroSideDrive(DRIVE_SPEED, -16, 0, 5);
+            gyroSideDrive(DRIVE_SPEED, -17, 0, 5);
         }
 
         //Check if right mineral is gold
@@ -295,15 +177,13 @@ public class Depot extends LinearOpMode {
             straightenGold(TURN_SPEED);
             //Hit the gold
             gyroDrive(DRIVE_SPEED, 10, 0, 10);
-            gyroDrive(DRIVE_SPEED, -14, 0, 10);
+            gyroDrive(DRIVE_SPEED, -10, 0, 10);
             hitGold = true;
             position = 3;
         } else {
             //Drive to the left mineral
             if (!hitGold) {
-                resetGyro();
-                gyroTurn(TURN_SPEED, 15, 4, 3);
-                gyroSideDrive(DRIVE_SPEED, 35, 15, 7);
+                gyroSideDrive(DRIVE_SPEED, 35, 0, 7);
             }
         }
 
@@ -316,102 +196,89 @@ public class Depot extends LinearOpMode {
             //Straighten robot to mineral
             straightenGold(TURN_SPEED);
             //Hit the gold
-            gyroDrive(DRIVE_SPEED, 10,  10);
-            gyroDrive(DRIVE_SPEED, -14,  10);
+            gyroDrive(DRIVE_SPEED, 10, 0, 10);
+            gyroDrive(DRIVE_SPEED, -10, 0, 10);
             hitGold = true;
             position = 1;
         }
 
         yellowVision.disable();
 
-//        if (position == 3) {
-//            sleep(300);
-//            gyroSideDrive(DRIVE_SPEED, 33, 0, 5);
-//        }
-//
-//        if (position == 2) {
-//            gyroSideDrive(DRIVE_SPEED, 16, 0, 5);
-//        }
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
+        if (position == 3) {
+            gyroSideDrive(DRIVE_SPEED, 35, 0, 5);
+        }
+
+        if (position == 2) {
+            gyroSideDrive(DRIVE_SPEED, 16, 0, 5);
+        }
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
 
         //Side drive away from minerals
-//        gyroSideDrive(DRIVE_SPEED, 24, 0, 5);
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
-//
-//        //Turn 45
-//        gyroTurn(TURN_SPEED, 45, 10, 5);
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
-//
-//        resetGyro();
-//
-//        //Drive into wall to straighten
-//        gyroDrive(0.3, 28, 0, 5);
-//        sleep(500);
-//        // Side Drive toward the depot
-//        gyroSideDriveWall(0.6, -52, 0, 7);
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
-//
-//        //Bck up
-//        gyroDrive(0.3, -1, 10);
-//
-//        //turn 180
-//        gyroTurn(TURN_SPEED, 90, 10, 5);
-//        resetGyro();
-//        gyroTurn(TURN_SPEED, 90, 10, 5);
-//
-//        //back up and go into crater
-//        gyroDrive(DRIVE_SPEED, -1, 90, 5);
-//        gyroSideDrive(DRIVE_SPEED, 2, 90, 5);
-//
-//        //Place marker
-//        marker.setPosition(1);
-//        sleep(700);
+        gyroSideDrive(DRIVE_SPEED, 24, 0, 5);
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
 
-//        //Drive Toward the Crater
-//        gyroSideDriveWall(0.6, -66, 0, 10);
-//
-//        resetGyro();
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
-//        //Back up before turning
-//        gyroDrive(DRIVE_SPEED, -1, 0, 5);
-//
-//        //Turning BEFORE putting the arm over the crater
-//        gyroTurn(MINIMUM_TURN_SPEED, 90,-20, 10);
-//
-//        //Drive up to crater
-//        gyroDrive(DRIVE_SPEED, -22, 8);
-//
-//        if (testMode) {
-//            while (!gamepad1.y && opModeIsActive()) {
-//                sleep(10);
-//            }
-//        }
-//        //Move the arm above the crater
-//        armMove(2000, 0.5, 10);
-//
+        //Turn 45
+        gyroTurn(TURN_SPEED, 45, 10, 5);
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+
+        resetGyro();
+
+        //Drive into wall to straighten
+        gyroDrive(0.3, 28, 0, 5);
+        sleep(500);
+        // Side Drive toward the depot
+        gyroSideDriveWall(0.6, 50, 0, 7);
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+
+        //Place marker
+//        marker.setPosition(1);
+        sleep(700);
+
+        //Drive Toward the Crater
+        gyroSideDriveWall(0.6, -66, 0, 10);
+
+        resetGyro();
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+        //Back up before turning
+        gyroDrive(DRIVE_SPEED, -1, 0, 5);
+
+        //Turning BEFORE putting the arm over the crater
+        gyroTurn(MINIMUM_TURN_SPEED, 90,20, 10);
+
+        //Drive up to crater
+        gyroDrive(DRIVE_SPEED, -22, 90, 8);
+
+        if (testMode) {
+            while (!gamepad1.y && opModeIsActive()) {
+                sleep(10);
+            }
+        }
+        //Move the arm above the crater
+//        armMove(4000, 0.5, 10);
+
 
 
     }
@@ -905,39 +772,39 @@ public class Depot extends LinearOpMode {
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
     }
 
-    public void armMove(int position, double speed, double timeout) {
-        runtime.reset();
-
-        double startPosition = arm1.getCurrentPosition();
-
-        if(position > 0) {
-
-            arm1.setPower(speed);
-            arm2.setPower(speed);
-
-            while ((arm1.getCurrentPosition() < (position + startPosition)) && (runtime.seconds() < timeout)) {
-
-                telemetry.addData("encoder value arm", arm1.getCurrentPosition());
-                telemetry.update();
-
-            }
-        }
-
-        else if(position < 0) {
-
-            arm1.setPower(-speed);
-            arm2.setPower(-speed);
-
-            while (arm1.getCurrentPosition() > (position + startPosition)&& (runtime.seconds() < timeout)) {
-
-                telemetry.addData("encoder value arm", arm1.getCurrentPosition());
-                telemetry.update();
-            }
-        }
-
-        arm1.setPower(0);
-        arm2.setPower(0);
-    }
+//    public void armMove(int position, double speed, double timeout) {
+//        runtime.reset();
+//
+//        double startPosition = arm1.getCurrentPosition();
+//
+//        if(position > 0) {
+//
+//            arm1.setPower(speed);
+//            arm2.setPower(speed);
+//
+//            while ((arm1.getCurrentPosition() < (position + startPosition)) && (runtime.seconds() < timeout)) {
+//
+//                telemetry.addData("encoder value arm", arm1.getCurrentPosition());
+//                telemetry.update();
+//
+//            }
+//        }
+//
+//        else if(position < 0) {
+//
+//            arm1.setPower(-speed);
+//            arm2.setPower(-speed);
+//
+//            while (arm1.getCurrentPosition() > (position + startPosition)&& (runtime.seconds() < timeout)) {
+//
+//                telemetry.addData("encoder value arm", arm1.getCurrentPosition());
+//                telemetry.update();
+//            }
+//        }
+//
+//        arm1.setPower(0);
+//        arm2.setPower(0);
+//    }
 
     public boolean checkGold() {
         //yellowVision.enable();

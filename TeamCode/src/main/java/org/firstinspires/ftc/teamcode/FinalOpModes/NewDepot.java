@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
+package org.firstinspires.ftc.teamcode.FinalOpModes;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -6,20 +6,15 @@ import android.view.View;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
-import org.firstinspires.ftc.robotcontroller.internal.ThreeBlockYellowVision;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
 
@@ -27,29 +22,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
-import java.sql.Driver;
 import java.util.List;
 import java.util.Locale;
 
 
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Rect;
-import org.opencv.imgproc.Imgproc;
 
 
-//@Autonomous(name="NewCrater", group="Pushbot")
-public class NewCrater extends LinearOpMode {
+//@Autonomous(name="NewDepot", group="Pushbot")
+public class NewDepot extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
     Acceleration gravity;
@@ -249,6 +236,7 @@ public class NewCrater extends LinearOpMode {
         //Drop down from Lander
 
         pullUp.setPower(-1.0);
+
         //runtime.reset();
         while (digitalTouch.getState() == true/* && (runtime.seconds() < 8.0)*/) {
             telemetry.addData("Digital Touch", "Is Not Pressed");
@@ -306,7 +294,7 @@ public class NewCrater extends LinearOpMode {
         //Create Adaptive Variables to keep track of bot location and task completion
         boolean hitGold = false;
         int position = 0;
-
+        sleep(400);
         //Check if middle mineral is gold
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
@@ -314,7 +302,7 @@ public class NewCrater extends LinearOpMode {
             sleep(200);
             gyroSideDrive(0.4, -18, 0, 10);
             sleep(200);
-            gyroSideDrive(0.4, 11, 0, 10);
+            gyroSideDrive(0.4, 9, 0, 10);
 
             position = 2;
             hitGold = true;
@@ -335,7 +323,7 @@ public class NewCrater extends LinearOpMode {
         if (!hitGold && checkGold()) {
             //Hit the gold and come back
             gyroSideDrive(DRIVE_SPEED, -22, -42, 10);
-            gyroSideDrive(DRIVE_SPEED, 10, -42, 10);
+            gyroSideDrive(DRIVE_SPEED, 9, -42, 10);
 
             position = 1;
             hitGold = true;
@@ -358,9 +346,8 @@ public class NewCrater extends LinearOpMode {
 //        }
         if (!hitGold) {
             gyroTurn(TURN_SPEED, 45, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, -24, 45, 10);
-            gyroSideDrive(DRIVE_SPEED, 14, 45, 10);
-            position = 3;
+            gyroSideDrive(DRIVE_SPEED, -26, 45, 10);
+            gyroSideDrive(DRIVE_SPEED, 13, 45, 10);
         }
 
         tfod.shutdown();
@@ -381,7 +368,7 @@ public class NewCrater extends LinearOpMode {
 
         //Drive to wall
 
-        gyroDrive(DRIVE_SPEED,35, 0, 10);
+        gyroDrive(DRIVE_SPEED,40, 0, 10);
 
 
         if (testMode) {
@@ -390,9 +377,9 @@ public class NewCrater extends LinearOpMode {
             }
         }
 
-        //Turn to 45 to ram
+        //Turn to -135 to ram
 
-        gyroTurn(TURN_SPEED,45,45,10);
+        gyroTurn(TURN_SPEED,-135,-135,10);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
@@ -401,20 +388,33 @@ public class NewCrater extends LinearOpMode {
         }
 
         //RAM WALLLLLLLLLLLL
-        gyroSideDrive(DRIVE_SPEED, -24, 10);
+        gyroSideDrive(DRIVE_SPEED, 20, 10);
+        sleep(500);
 
         if (testMode) {
             while (!gamepad1.y && opModeIsActive()) {
+                // convert the RGB values to HSV values.
+                // multiply by the SCALE_FACTOR.
+                // then cast it back to int (SCALE_FACTOR is a double)
+                Color.RGBToHSV((int) (sensorColor.red() * SCALE_FACTOR),
+                        (int) (sensorColor.green() * SCALE_FACTOR),
+                        (int) (sensorColor.blue() * SCALE_FACTOR),
+                        hsvValues);
+                telemetry.addData("Hue", hsvValues[0]);
+                telemetry.update();
                 sleep(10);
             }
         }
+
+        gyroDrive(DRIVE_SPEED, 10, 5);
         //Back up to Depot (Stop using light sensor)
         leftFront.setPower(0.5);
         leftRear.setPower(0.5);
         rightFront.setPower(0.5);
         rightRear.setPower(0.5);
 
-        while (hsvValues[0] < 150 && hsvValues[0] > 40) {
+        //while (hsvValues[0] < 150 && hsvValues[0] > 40) {
+        while (Math.abs(sensorColor.red() - sensorColor.blue()) < 5) {
             // convert the RGB values to HSV values.
             // multiply by the SCALE_FACTOR.
             // then cast it back to int (SCALE_FACTOR is a double)
@@ -452,7 +452,7 @@ public class NewCrater extends LinearOpMode {
 
         //Drive Toward the Crater
 
-        gyroDrive(0.5,-62,10);
+        gyroDrive(0.5,-67,10);
 
     }
 

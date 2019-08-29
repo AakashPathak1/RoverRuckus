@@ -1,17 +1,12 @@
-package org.firstinspires.ftc.robotcontroller.internal.FinalOpModes;
+package org.firstinspires.ftc.teamcode.FinalOpModes;
 
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.util.RobotLog;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -23,12 +18,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * In this mode the left stick moves the robot FWD and back, the Right stick turns left and right.
  * It raises and lowers the claw using the Gampad Y and A buttons respectively.
  * It also opens and closes the claws slowly using the left and right Bumper buttons.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
+ */
+ /* Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="FinalTeleOp", group="8872")
+@TeleOp(name="FinalTeleOp2", group="8872")
 //@Disabled
 public class FinalTeleOp extends LinearOpMode {
 
@@ -58,9 +53,9 @@ public class FinalTeleOp extends LinearOpMode {
     boolean slowMode = false;
     boolean scooperToggle = false;
 
-    DigitalChannel upStop;  // Hardware Device Object
-    DigitalChannel downStop;  // Hardware Device Object
-    DigitalChannel armSensor;  // Hardware Device Object
+     DigitalChannel upStop;  // Hardware Device Object
+     DigitalChannel downStop;  // Hardware Device Object
+     DigitalChannel armSensor;  // Hardware Device Object
 
     static final double APPROACH_SPEED = 0.2;
     static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: Torquenado Motor Encoder
@@ -90,15 +85,15 @@ public class FinalTeleOp extends LinearOpMode {
         depotLock = hardwareMap.servo.get("depotLock");
         marker = hardwareMap.servo.get("marker");
 
-        upStop = hardwareMap.get(DigitalChannel.class, "upStop");
-        downStop = hardwareMap.get(DigitalChannel.class, "downStop");
-        armSensor = hardwareMap.get(DigitalChannel.class, "armSensor");
+         upStop = hardwareMap.get(DigitalChannel.class, "upStop");
+         downStop = hardwareMap.get(DigitalChannel.class, "downStop");
+         armSensor = hardwareMap.get(DigitalChannel.class, "armSensor");
 
 
-        // set the digital channel to input.
-        upStop.setMode(DigitalChannel.Mode.INPUT);
-        downStop.setMode(DigitalChannel.Mode.INPUT);
-        armSensor.setMode(DigitalChannel.Mode.INPUT);
+         //set the digital channel to input.
+         upStop.setMode(DigitalChannel.Mode.INPUT);
+         downStop.setMode(DigitalChannel.Mode.INPUT);
+         armSensor.setMode(DigitalChannel.Mode.INPUT);
 
 
         pullUp.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -120,7 +115,7 @@ public class FinalTeleOp extends LinearOpMode {
 
         stopper.setPosition(0.0);
 
-        marker.setPosition(1); //inside position
+        marker.setPosition(0.5); //inside position
 
 
 
@@ -199,6 +194,8 @@ public class FinalTeleOp extends LinearOpMode {
             }
 
 
+
+
             // if the digital channel returns true it's HIGH and the button is unpressed.
             if ((upStop.getState() == true) && (downStop.getState() == true)) {
                 telemetry.addData("upStop", "Is Not Pressed");
@@ -209,7 +206,7 @@ public class FinalTeleOp extends LinearOpMode {
                     pullUpPower = gamepad2.left_stick_y;
                     if (pullUpPower < 0) {
                         pullUp.setPower(pullUpPower);
-                   } else {
+                    } else {
                         pullUp.setPower(0);
                     }
                     telemetry.addData("upStop", "Is Pressed");
@@ -223,6 +220,7 @@ public class FinalTeleOp extends LinearOpMode {
                     telemetry.addData("downStop", "Is Pressed");
                 }
             }
+
             armPower = -gamepad2.right_stick_y;
             arm.setPower(armPower);
 
